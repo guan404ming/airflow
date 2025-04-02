@@ -23,6 +23,8 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any, Union
 
+from sqlalchemy.engine import URL
+
 from airflow.exceptions import AirflowOptionalProviderFeatureException
 from airflow.providers.common.sql.hooks.sql import DbApiHook
 
@@ -363,3 +365,94 @@ class MySqlHook(DbApiHook):
     def get_openlineage_default_schema(self):
         """MySQL has no concept of schema."""
         return None
+
+    def get_uri(self) -> str:
+        """Get URI for MySQL connection."""
+        from urllib.parse import quote_plus
+
+        conn = self.connection
+        conn_schema = self.schema or conn.schema or ""
+
+        if conn.extra_dejson.get("client", "mysqlclient") == "mysql-connector-python":
+            uri = "mysql+mysqlconnector://"
+            if conn.login is not None:
+                uri += quote_plus(conn.login)
+                if conn.password is not None:
+                    uri += ":" + quote_plus(conn.password)
+                uri += "@"
+
+            uri += conn.host or "localhost"
+            if conn.port:
+                uri += f":{conn.port}"
+            if conn_schema:
+                uri += f"/{quote_plus(conn_schema)}"
+
+            # Add extra connection parameters
+            extra = conn.extra_dejson.copy()
+            if "client" in extra:
+                extra.pop("client")
+            if extra:
+                params = []
+                for k, v in extra.items():
+                    if k.startswith("ssl_") and v is not None:
+                        params.append(f"{k}={quote_plus(str(v))}")
+                if params:
+                    uri += "?" + "&".join(params)
+
+            return uri
+        else:  # default: mysqlclient
+            uri = "mysql://"
+            if conn.login is not None:
+                uri += quote_plus(conn.login)
+                if conn.password is not None:
+                    uri += ":" + quote_plus(conn.password)
+                uri += "@"
+
+            uri += conn.host or "localhost"
+            if conn.port:
+                uri += f":{conn.port}"
+            if conn_schema:
+                uri += f"/{quote_plus(conn_schema)}"
+
+            # Add extra connection parameters
+            extra = conn.extra_dejson.copy()
+            if "client" in extra:
+                extra.pop("client")
+
+            params = []
+            for k, v in extra.items():
+                if v is not None:
+                    params.append(f"{k}={quote_plus(str(v))}")
+
+            if params:
+                uri += "?" + "&".join(params)
+
+            return uri
+
+    @property
+    def sqlalchemy_url(self) -> URL:
+        """Return a SQLAlchemy URL object representing the connection."""
+        conn = self.connection
+        conn_schema = self.schema or conn.schema or ""
+
+        if conn.extra_dejson.get("client", "mysqlclient") == "mysql-connector-python":
+            sqlalchemy_scheme = "mysql+mysqlconnector"
+        else:
+            sqlalchemy_scheme = "mysql"
+
+        conn_args = {"host": conn.host or "localhost"}
+        if conn.port:
+            conn_args["port"] = conn.port
+        if conn.login:
+            conn_args["username"] = conn.login
+        if conn.password:
+            conn_args["password"] = conn.password
+        if conn_schema:
+            conn_args["database"] = conn_schema
+
+        # Add query parameters from extras (excluding client)
+        query = {k: v for k, v in conn.extra_dejson.items() if k != "client" and v is not None}
+        if query:
+            conn_args["query"] = query
+
+        return URL.create(sqlalchemy_scheme, **conn_args)

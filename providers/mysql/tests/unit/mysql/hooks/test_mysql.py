@@ -209,6 +209,77 @@ class TestMySqlHookConn:
         assert args == ()
         assert kwargs["init_command"] == "SET time_zone = '+00:00';"
 
+    def test_get_uri_with_different_clients(self):
+        # Test with default client (mysqlclient)
+        assert self.db_hook.get_uri() == "mysql://login:password@host/schema"
+
+        # Test with login/password containing special characters
+        self.connection.login = "user@domain"
+        self.connection.password = "pass/word!"
+        assert self.db_hook.get_uri() == "mysql://user%40domain:pass%2Fword%21@host/schema"
+
+        # Reset to normal values
+        self.connection.login = "login"
+        self.connection.password = "password"
+
+        # Test with mysql-connector-python client
+        self.connection.extra = json.dumps({"client": "mysql-connector-python"})
+        assert self.db_hook.get_uri() == "mysql+mysqlconnector://login:password@host/schema"
+
+        # Test with custom port
+        self.connection.port = 3307
+        assert self.db_hook.get_uri() == "mysql+mysqlconnector://login:password@host:3307/schema"
+
+        # Test with schema containing special characters
+        self.connection.schema = "db/name"
+        assert self.db_hook.get_uri() == "mysql+mysqlconnector://login:password@host:3307/db%2Fname"
+
+        # Reset schema
+        self.connection.schema = "schema"
+
+        # Test with SSL parameters
+        self.connection.extra = json.dumps(
+            {
+                "client": "mysql-connector-python",
+                "ssl_ca": "/path/to/ca",
+                "ssl_cert": "/path/to/cert with space",
+            }
+        )
+        assert (
+            self.db_hook.get_uri()
+            == "mysql+mysqlconnector://login:password@host:3307/schema?ssl_ca=%2Fpath%2Fto%2Fca&ssl_cert=%2Fpath%2Fto%2Fcert+with+space"
+        )
+
+    def test_sqlalchemy_url_property(self):
+        # Test with default client (mysqlclient)
+        url = self.db_hook.sqlalchemy_url
+        assert url.drivername == "mysql"
+        assert url.username == "login"
+        assert url.password == "password"
+        assert url.host == "host"
+        assert url.database == "schema"
+
+        # Test with mysql-connector-python client
+        self.connection.extra = json.dumps({"client": "mysql-connector-python"})
+        url = self.db_hook.sqlalchemy_url
+        assert url.drivername == "mysql+mysqlconnector"
+        assert url.username == "login"
+        assert url.password == "password"
+        assert url.host == "host"
+        assert url.database == "schema"
+
+        # Test with extra parameters
+        self.connection.extra = json.dumps(
+            {"client": "mysql-connector-python", "charset": "utf8mb4", "ssl_ca": "/path/to/ca"}
+        )
+        url = self.db_hook.sqlalchemy_url
+        assert url.drivername == "mysql+mysqlconnector"
+        assert url.username == "login"
+        assert url.password == "password"
+        assert url.host == "host"
+        assert url.database == "schema"
+        assert url.query == {"charset": "utf8mb4", "ssl_ca": "/path/to/ca"}
+
 
 class MockMySQLConnectorConnection:
     DEFAULT_AUTOCOMMIT = "default"
