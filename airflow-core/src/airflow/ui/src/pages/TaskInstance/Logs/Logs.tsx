@@ -81,6 +81,7 @@ export const Logs = () => {
     error: logError,
     isLoading: isLoadingLogs,
   } = useLogs({
+    accept: "application/json",
     dagId,
     logLevelFilters,
     sourceFilters,

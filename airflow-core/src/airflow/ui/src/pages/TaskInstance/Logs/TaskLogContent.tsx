@@ -17,22 +17,32 @@
  * under the License.
  */
 import { Box, Code, VStack, useToken } from "@chakra-ui/react";
-import type { ReactNode } from "react";
-import { useLayoutEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useLayoutEffect, useRef } from "react";
 
 import { ErrorAlert } from "src/components/ErrorAlert";
 import { ProgressBar } from "src/components/ui";
+
+const EMPTY_ARRAY: Array<JSX.Element | string | undefined> = [];
 
 type Props = {
   readonly error: unknown;
   readonly isLoading: boolean;
   readonly logError: unknown;
-  readonly parsedLogs: ReactNode;
+  readonly parsedLogs: Array<JSX.Element | string | undefined> | undefined;
   readonly wrap: boolean;
 };
 
-export const TaskLogContent = ({ error, isLoading, logError, parsedLogs, wrap }: Props) => {
+export const TaskLogContent = ({ error, isLoading, logError, parsedLogs = EMPTY_ARRAY, wrap }: Props) => {
   const [bgLine] = useToken("colors", ["blue.emphasized"]);
+  const parentRef = useRef(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: parsedLogs.length,
+    estimateSize: () => 40,
+    getScrollElement: () => parentRef.current,
+    overscan: 5,
+  });
 
   useLayoutEffect(() => {
     if (location.hash) {
@@ -64,11 +74,16 @@ export const TaskLogContent = ({ error, isLoading, logError, parsedLogs, wrap }:
         }}
         overflow="auto"
         py={3}
+        ref={parentRef}
         textWrap={wrap ? "pre" : "nowrap"}
         width="100%"
       >
-        <VStack alignItems="flex-start" gap={0}>
-          {parsedLogs}
+        <VStack alignItems="flex-start" gap={0} h={`${rowVirtualizer.getTotalSize()}px`} position="relative">
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+            <Box data-index={virtualRow.index} key={virtualRow.key} ref={rowVirtualizer.measureElement}>
+              {parsedLogs[virtualRow.index] ?? undefined}
+            </Box>
+          ))}
         </VStack>
       </Code>
     </Box>
