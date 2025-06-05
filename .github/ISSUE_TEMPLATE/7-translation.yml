@@ -1,0 +1,41 @@
+---
+name: New Language Translation Checklist
+description: Checklist for adding a new language translation to Airflow UI
+title: "New Language Translation: [LANGUAGE]"
+labels:
+  - i18n
+  - ui
+body:
+  - type: markdown
+    attributes:
+      # yamllint disable rule:line-length
+      value: "
+        <img src='https://raw.githubusercontent.com/apache/airflow/main/airflow-core/docs/img/logos/airflow_64x64_emoji_transparent.png' align='left' width='120' height='120'>
+        Thank you for finding the time to add a new language translation to Airflow UI!
+
+        We really appreciate the community's efforts to improve Airflow.
+
+        Note, you do not need to create an issue if you have a change ready to submit!
+
+        You can open a [pull request](https://github.com/apache/airflow/pulls) immediately instead.
+        <br clear='left'/>"
+      # yamllint enable rule:line-length
+  - type: input
+    id: lang_code
+    attributes:
+      label: Language Code
+      description: Please enter the language code (e.g., en, zh-TW, ar)
+      placeholder: en
+    validations:
+      required: true
+  - type: checkboxes
+    id: translation_files
+    attributes:
+      label: Translation Files
+      description: Please check each file as you complete its translation.
+      options:
+        - label: common.json
+        - label: components.json
+        - label: connections.json
+        - label: dags.json
+        - label: dashboard.json
