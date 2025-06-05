@@ -1,0 +1,34 @@
+name: New Language Translation Checklist
+description: Checklist for adding a new language translation to Airflow UI
+title: 'New Language Translation: [LANG_CODE]'
+labels:
+- i18n
+- translation
+body:
+- type: markdown
+  attributes:
+    value: '## New Language Translation Checklist
+
+
+      Thank you for contributing a new language!
+
+      Please check off each file as you add its translation.'
+- type: input
+  id: lang_code
+  attributes:
+    label: Language Code
+    description: Please enter the language code (e.g., zh, fr, de)
+    placeholder: zh
+  validations:
+    required: true
+- type: checkboxes
+  id: translation_files
+  attributes:
+    label: Translation Files
+    description: Please check each file as you complete its translation.
+    options:
+    - label: common.json
+    - label: connections.json
+    - label: dags.json
+    - label: dashboard.json
+    - label: test.json

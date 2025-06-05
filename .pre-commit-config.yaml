@@ -244,6 +244,12 @@ repos:
         # libcst doesn't have source wheels for all PY except PY3.12, excluding it
         additional_dependencies: ['libcst>=1.1.0,!=1.8.0']
         files: ^(providers/.*/)?airflow/.*/(sensors|operators)/.*\.py$
+      - id: generate-translation-issue-template
+        name: Generate translation issue template from en json
+        language: python
+        entry: ./scripts/ci/pre_commit/generate_translation_issue_template.py
+        pass_filenames: true
+        files: ^airflow-core/src/airflow/ui/src/i18n/locales/en/.*\.json$
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.19.1
     hooks:
