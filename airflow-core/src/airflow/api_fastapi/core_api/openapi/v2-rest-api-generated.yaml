@@ -9267,7 +9267,7 @@ components:
           items:
             anyOf:
             - type: string
-            - $ref: '#/components/schemas/BulkTaskInstanceBody'
+            - $ref: '#/components/schemas/ConnectionBody'
           type: array
           title: Entities
           description: A list of entity id/key or entity objects to be deleted.
@@ -9291,7 +9291,7 @@ components:
           items:
             anyOf:
             - type: string
-            - $ref: '#/components/schemas/BulkTaskInstanceBody'
+            - $ref: '#/components/schemas/PoolBody'
           type: array
           title: Entities
           description: A list of entity id/key or entity objects to be deleted.
@@ -9315,7 +9315,7 @@ components:
           items:
             anyOf:
             - type: string
-            - $ref: '#/components/schemas/BulkTaskInstanceBody'
+            - $ref: '#/components/schemas/VariableBody'
           type: array
           title: Entities
           description: A list of entity id/key or entity objects to be deleted.
@@ -9397,6 +9397,16 @@ components:
           - type: integer
           - type: 'null'
           title: Map Index
+        dag_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dag Id
+        dag_run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dag Run Id
       additionalProperties: false
       type: object
       required:
