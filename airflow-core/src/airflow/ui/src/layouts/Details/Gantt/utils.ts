@@ -146,32 +146,48 @@ export const transformGanttData = ({
 export const createHandleBarClick =
   ({ dagId, data, location, navigate, runId }: HandleBarClickOptions) =>
   (_: ChartEvent, elements: Array<ActiveElement>) => {
-    if (elements.length > 0 && elements[0] && Boolean(runId)) {
-      const clickedData = data[elements[0].index];
-
-      if (clickedData) {
-        const { isGroup, isMapped, taskId } = clickedData;
-
-        const taskUrl = buildTaskInstanceUrl({
-          currentPathname: location.pathname,
-          dagId,
-          isGroup: Boolean(isGroup),
-          isMapped: Boolean(isMapped),
-          runId,
-          taskId,
-        });
-
-        void Promise.resolve(
-          navigate(
-            {
-              pathname: taskUrl,
-              search: location.search,
-            },
-            { replace: true },
-          ),
-        );
-      }
+    if (elements.length === 0 || !elements[0] || !runId) {
+      return;
     }
+
+    const clickedData = data[elements[0].index];
+
+    if (!clickedData) {
+      return;
+    }
+
+    const { isGroup, isMapped, taskId, tryNumber } = clickedData;
+
+    const taskUrl = buildTaskInstanceUrl({
+      currentPathname: location.pathname,
+      dagId,
+      isGroup: Boolean(isGroup),
+      isMapped: Boolean(isMapped),
+      runId,
+      taskId,
+    });
+
+    const searchParams = new URLSearchParams(location.search);
+    const isOlderTry =
+      tryNumber !== undefined &&
+      tryNumber <
+        Math.max(...data.filter((item) => item.taskId === taskId).map((item) => item.tryNumber ?? 1));
+
+    if (isOlderTry) {
+      searchParams.set("try_number", tryNumber.toString());
+    } else {
+      searchParams.delete("try_number");
+    }
+
+    void Promise.resolve(
+      navigate(
+        {
+          pathname: taskUrl,
+          search: searchParams.toString(),
+        },
+        { replace: true },
+      ),
+    );
   };
 
 export const createHandleBarHover = (
