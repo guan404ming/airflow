@@ -84,6 +84,45 @@ def extract_single_connected_component(
     return {"nodes": nodes, "edges": edges}
 
 
+def get_scheduling_dependencies() -> dict[str, list[dict]]:
+    """Get scheduling dependencies between DAGs."""
+    from airflow.models.serialized_dag import SerializedDagModel
+
+    nodes_dict: dict[str, dict] = {}
+    edge_tuples: set[tuple[str, str]] = set()
+
+    for dag, dependencies in sorted(SerializedDagModel.get_dag_dependencies().items()):
+        dag_node_id = f"dag:{dag}"
+        if dag_node_id not in nodes_dict:
+            for dep in dependencies:
+                # Add nodes
+                nodes_dict[dag_node_id] = {"id": dag_node_id, "label": dag, "type": "dag"}
+                if dep.node_id not in nodes_dict:
+                    nodes_dict[dep.node_id] = {
+                        "id": dep.node_id,
+                        "label": dep.label,
+                        "type": dep.dependency_type,
+                    }
+
+                # Add edges
+                # not start dep
+                if dep.source != dep.dependency_type:
+                    source = dep.source if ":" in dep.source else f"dag:{dep.source}"
+                    target = dep.node_id
+                    edge_tuples.add((source, target))
+
+                # not end dep
+                if dep.target != dep.dependency_type:
+                    source = dep.node_id
+                    target = dep.target if ":" in dep.target else f"dag:{dep.target}"
+                    edge_tuples.add((source, target))
+
+    return {
+        "nodes": list(nodes_dict.values()),
+        "edges": [{"source_id": source, "target_id": target} for source, target in sorted(edge_tuples)],
+    }
+
+
 def get_data_dependencies(asset_id: int, session: Session) -> dict[str, list[dict]]:
     """Get full task dependencies for an asset."""
     from sqlalchemy import select
