@@ -20,6 +20,7 @@ import { Box, Button, Flex, HStack, LinkOverlay, Text } from "@chakra-ui/react";
 import type { NodeProps, Node as NodeType } from "@xyflow/react";
 import { useTranslation } from "react-i18next";
 
+import { TaskIcon } from "src/assets/TaskIcon";
 import { StateBadge } from "src/components/StateBadge";
 import TaskInstanceTooltip from "src/components/TaskInstanceTooltip";
 import { useOpenGroups } from "src/context/openGroups";
@@ -104,17 +105,20 @@ export const TaskNode = ({
             py={isSelected ? 0 : 1}
             width={`${width + (isSelected ? 4 : 0)}px`}
           >
-            <LinkOverlay asChild>
-              <TaskLink
-                childCount={thisChildCount}
-                id={id}
-                isGroup={isGroup}
-                isMapped={isMapped}
-                isOpen={isOpen}
-                label={displayLabel}
-                setupTeardownType={setupTeardownType}
-              />
-            </LinkOverlay>
+            <HStack>
+              <TaskIcon />
+              <LinkOverlay asChild>
+                <TaskLink
+                  childCount={thisChildCount}
+                  id={id}
+                  isGroup={isGroup}
+                  isMapped={isMapped}
+                  isOpen={isOpen}
+                  label={displayLabel}
+                  setupTeardownType={setupTeardownType}
+                />
+              </LinkOverlay>
+            </HStack>
             <Text
               color="fg.muted"
               fontSize="sm"
