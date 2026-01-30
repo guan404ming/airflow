@@ -33,7 +33,6 @@ import {
 import "chart.js/auto";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
 import annotationPlugin from "chartjs-plugin-annotation";
-import dayjs from "dayjs";
 import { useDeferredValue } from "react";
 import { Bar } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
@@ -154,15 +153,10 @@ export const Gantt = ({ dagRunState, limit, runType, triggeringUser }: Props) =>
 
   const isLoading = runsLoading || structureLoading || summariesLoading || ganttLoading;
 
-  const currentTime = dayjs().tz(selectedTimezone).format(DEFAULT_DATETIME_FORMAT_WITH_TZ);
-
   const allTries = ganttData?.task_instances ?? [];
   const gridSummaries = gridTiSummaries?.task_instances ?? [];
 
-  const data =
-    isLoading || runId === ""
-      ? []
-      : transformGanttData({ allTries, currentTime, flatNodes, gridSummaries, selectedTimezone });
+  const data = isLoading || runId === "" ? [] : transformGanttData({ allTries, flatNodes, gridSummaries });
 
   const labels = flatNodes.map((node) => node.id);
 

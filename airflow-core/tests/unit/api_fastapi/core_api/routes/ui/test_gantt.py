@@ -227,7 +227,8 @@ class TestGetGanttDataEndpoint:
         ],
     )
     def test_task_filtering_and_states(self, test_client, dag_id, run_id, expected_task_ids, expected_states):
-        response = test_client.get(f"/gantt/{dag_id}/{run_id}")
+        with assert_queries_count(3):
+            response = test_client.get(f"/gantt/{dag_id}/{run_id}")
         assert response.status_code == 200
         data = response.json()
 
@@ -272,7 +273,8 @@ class TestGetGanttDataEndpoint:
     def test_task_dates_and_states(
         self, test_client, dag_id, run_id, task_id, expected_start, expected_end, expected_state
     ):
-        response = test_client.get(f"/gantt/{dag_id}/{run_id}")
+        with assert_queries_count(3):
+            response = test_client.get(f"/gantt/{dag_id}/{run_id}")
         assert response.status_code == 200
         data = response.json()
         ti = next((t for t in data["task_instances"] if t["task_id"] == task_id), None)
@@ -282,7 +284,8 @@ class TestGetGanttDataEndpoint:
         assert ti["state"] == expected_state
 
     def test_sorted_by_task_id_and_try_number(self, test_client):
-        response = test_client.get(f"/gantt/{DAG_ID}/run_1")
+        with assert_queries_count(3):
+            response = test_client.get(f"/gantt/{DAG_ID}/run_1")
         assert response.status_code == 200
         data = response.json()
         task_instances = data["task_instances"]
@@ -306,5 +309,6 @@ class TestGetGanttDataEndpoint:
         ],
     )
     def test_should_response_404(self, test_client, dag_id, run_id):
-        response = test_client.get(f"/gantt/{dag_id}/{run_id}")
+        with assert_queries_count(3):
+            response = test_client.get(f"/gantt/{dag_id}/{run_id}")
         assert response.status_code == 404

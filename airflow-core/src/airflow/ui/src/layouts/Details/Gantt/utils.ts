@@ -29,9 +29,10 @@ import type {
   LightGridTaskInstanceSummary,
   TaskInstanceState,
 } from "openapi/requests";
+import { SearchParamsKeys } from "src/constants/searchParams";
 import type { GridTask } from "src/layouts/Details/Grid/utils";
 import { getDuration, isStatePending } from "src/utils";
-import { DEFAULT_DATETIME_FORMAT_WITH_TZ, formatDate } from "src/utils/datetimeUtils";
+import { formatDate } from "src/utils/datetimeUtils";
 import { buildTaskInstanceUrl } from "src/utils/links";
 
 export type GanttDataItem = {
@@ -69,18 +70,14 @@ type ChartOptionsParams = {
 
 type TransformGanttDataParams = {
   allTries: Array<GanttTaskInstance>;
-  currentTime: string;
   flatNodes: Array<GridTask>;
   gridSummaries: Array<LightGridTaskInstanceSummary>;
-  selectedTimezone: string;
 };
 
 export const transformGanttData = ({
   allTries,
-  currentTime,
   flatNodes,
   gridSummaries,
-  selectedTimezone,
 }: TransformGanttDataParams): Array<GanttDataItem> => {
   // Group tries by task_id
   const triesByTask = new Map<string, Array<GanttTaskInstance>>();
@@ -97,6 +94,7 @@ export const transformGanttData = ({
       const gridSummary = gridSummaries.find((ti) => ti.task_id === node.id);
 
       // Handle groups and mapped tasks using grid summary (aggregated min/max times)
+      // Use ISO so time scale and bar positions render consistently across browsers
       if ((node.isGroup ?? node.is_mapped) && gridSummary) {
         return [
           {
@@ -105,8 +103,8 @@ export const transformGanttData = ({
             state: gridSummary.state,
             taskId: gridSummary.task_id,
             x: [
-              formatDate(gridSummary.min_start_date, selectedTimezone, DEFAULT_DATETIME_FORMAT_WITH_TZ),
-              formatDate(gridSummary.max_end_date, selectedTimezone, DEFAULT_DATETIME_FORMAT_WITH_TZ),
+              dayjs(gridSummary.min_start_date).toISOString(),
+              dayjs(gridSummary.max_end_date).toISOString(),
             ],
             y: gridSummary.task_id,
           },
@@ -120,7 +118,7 @@ export const transformGanttData = ({
         if (tries && tries.length > 0) {
           return tries.map((tryInstance) => {
             const hasTaskRunning = isStatePending(tryInstance.state);
-            const endTime = hasTaskRunning ? currentTime : tryInstance.end_date;
+            const endTime = hasTaskRunning ? dayjs().toISOString() : tryInstance.end_date;
 
             return {
               isGroup: false,
@@ -128,10 +126,7 @@ export const transformGanttData = ({
               state: tryInstance.state,
               taskId: tryInstance.task_id,
               tryNumber: tryInstance.try_number,
-              x: [
-                formatDate(tryInstance.start_date, selectedTimezone, DEFAULT_DATETIME_FORMAT_WITH_TZ),
-                formatDate(endTime, selectedTimezone, DEFAULT_DATETIME_FORMAT_WITH_TZ),
-              ],
+              x: [dayjs(tryInstance.start_date).toISOString(), dayjs(endTime).toISOString()],
               y: tryInstance.task_id,
             };
           });
@@ -174,9 +169,9 @@ export const createHandleBarClick =
         Math.max(...data.filter((item) => item.taskId === taskId).map((item) => item.tryNumber ?? 1));
 
     if (isOlderTry) {
-      searchParams.set("try_number", tryNumber.toString());
+      searchParams.set(SearchParamsKeys.TRY_NUMBER, tryNumber.toString());
     } else {
-      searchParams.delete("try_number");
+      searchParams.delete(SearchParamsKeys.TRY_NUMBER);
     }
 
     void Promise.resolve(
