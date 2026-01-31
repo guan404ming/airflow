@@ -71,6 +71,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /ui/dags/{dag_id}/asset_partitions/pending:
+    get:
+      tags:
+      - Asset
+      summary: Get Pending Asset Partitions
+      description: Get pending partition runs and their asset fulfillment status for
+        a DAG.
+      operationId: get_pending_asset_partitions
+      security:
+      - OAuth2PasswordBearer: []
+      - HTTPBearer: []
+      parameters:
+      - name: dag_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Dag Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          default: 25
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingPartitionCollectionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /ui/config:
     get:
       tags:
@@ -2457,6 +2504,74 @@ components:
       description: Node serializer for responses.
     OklchColor:
       type: string
+    PartitionReceivedAsset:
+      properties:
+        asset_id:
+          type: integer
+          title: Asset Id
+        name:
+          type: string
+          title: Name
+        uri:
+          type: string
+          title: Uri
+        source_partition_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Partition Key
+      type: object
+      required:
+      - asset_id
+      - name
+      - uri
+      title: PartitionReceivedAsset
+      description: Single received asset info for a pending partition.
+    PendingPartitionCollectionResponse:
+      properties:
+        pending_partitions:
+          items:
+            $ref: '#/components/schemas/PendingPartitionResponse'
+          type: array
+          title: Pending Partitions
+        total_entries:
+          type: integer
+          title: Total Entries
+      type: object
+      required:
+      - pending_partitions
+      - total_entries
+      title: PendingPartitionCollectionResponse
+      description: Pending partition collection response.
+    PendingPartitionResponse:
+      properties:
+        partition_key:
+          type: string
+          title: Partition Key
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        received_count:
+          type: integer
+          title: Received Count
+        total_required:
+          type: integer
+          title: Total Required
+        received_assets:
+          items:
+            $ref: '#/components/schemas/PartitionReceivedAsset'
+          type: array
+          title: Received Assets
+      type: object
+      required:
+      - partition_key
+      - created_at
+      - received_count
+      - total_required
+      - received_assets
+      title: PendingPartitionResponse
+      description: One pending partition entry.
     ReprocessBehavior:
       type: string
       enum:

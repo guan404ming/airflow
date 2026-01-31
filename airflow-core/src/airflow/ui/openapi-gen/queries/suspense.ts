@@ -153,6 +153,21 @@ export const useAssetServiceNextRunAssetsSuspense = <TData = Common.AssetService
   dagId: string;
 }, queryKey?: TQueryKey, options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseAssetServiceNextRunAssetsKeyFn({ dagId }, queryKey), queryFn: () => AssetService.nextRunAssets({ dagId }) as TData, ...options });
 /**
+* Get Pending Asset Partitions
+* Get pending partition runs and their asset fulfillment status for a DAG.
+* @param data The data for the request.
+* @param data.dagId
+* @param data.limit
+* @param data.offset
+* @returns PendingPartitionCollectionResponse Successful Response
+* @throws ApiError
+*/
+export const useAssetServiceGetPendingAssetPartitionsSuspense = <TData = Common.AssetServiceGetPendingAssetPartitionsDefaultResponse, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>({ dagId, limit, offset }: {
+  dagId: string;
+  limit?: number;
+  offset?: number;
+}, queryKey?: TQueryKey, options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseAssetServiceGetPendingAssetPartitionsKeyFn({ dagId, limit, offset }, queryKey), queryFn: () => AssetService.getPendingAssetPartitions({ dagId, limit, offset }) as TData, ...options });
+/**
 * List Backfills
 * @param data The data for the request.
 * @param data.dagId

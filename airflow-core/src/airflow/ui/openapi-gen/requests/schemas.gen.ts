@@ -8252,6 +8252,91 @@ export const $OklchColor = {
     type: 'string'
 } as const;
 
+export const $PartitionReceivedAsset = {
+    properties: {
+        asset_id: {
+            type: 'integer',
+            title: 'Asset Id'
+        },
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        uri: {
+            type: 'string',
+            title: 'Uri'
+        },
+        source_partition_key: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Source Partition Key'
+        }
+    },
+    type: 'object',
+    required: ['asset_id', 'name', 'uri'],
+    title: 'PartitionReceivedAsset',
+    description: 'Single received asset info for a pending partition.'
+} as const;
+
+export const $PendingPartitionCollectionResponse = {
+    properties: {
+        pending_partitions: {
+            items: {
+                '$ref': '#/components/schemas/PendingPartitionResponse'
+            },
+            type: 'array',
+            title: 'Pending Partitions'
+        },
+        total_entries: {
+            type: 'integer',
+            title: 'Total Entries'
+        }
+    },
+    type: 'object',
+    required: ['pending_partitions', 'total_entries'],
+    title: 'PendingPartitionCollectionResponse',
+    description: 'Pending partition collection response.'
+} as const;
+
+export const $PendingPartitionResponse = {
+    properties: {
+        partition_key: {
+            type: 'string',
+            title: 'Partition Key'
+        },
+        created_at: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Created At'
+        },
+        received_count: {
+            type: 'integer',
+            title: 'Received Count'
+        },
+        total_required: {
+            type: 'integer',
+            title: 'Total Required'
+        },
+        received_assets: {
+            items: {
+                '$ref': '#/components/schemas/PartitionReceivedAsset'
+            },
+            type: 'array',
+            title: 'Received Assets'
+        }
+    },
+    type: 'object',
+    required: ['partition_key', 'created_at', 'received_count', 'total_required', 'received_assets'],
+    title: 'PendingPartitionResponse',
+    description: 'One pending partition entry.'
+} as const;
+
 export const $StandardHookFields = {
     properties: {
         description: {

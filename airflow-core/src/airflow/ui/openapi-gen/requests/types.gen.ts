@@ -2034,6 +2034,35 @@ export type NodeResponse = {
 export type OklchColor = string;
 
 /**
+ * Single received asset info for a pending partition.
+ */
+export type PartitionReceivedAsset = {
+    asset_id: number;
+    name: string;
+    uri: string;
+    source_partition_key?: string | null;
+};
+
+/**
+ * Pending partition collection response.
+ */
+export type PendingPartitionCollectionResponse = {
+    pending_partitions: Array<PendingPartitionResponse>;
+    total_entries: number;
+};
+
+/**
+ * One pending partition entry.
+ */
+export type PendingPartitionResponse = {
+    partition_key: string;
+    created_at: string;
+    received_count: number;
+    total_required: number;
+    received_assets: Array<PartitionReceivedAsset>;
+};
+
+/**
  * Standard fields of a Hook that a form will render.
  */
 export type StandardHookFields = {
@@ -2252,6 +2281,14 @@ export type NextRunAssetsData = {
 export type NextRunAssetsResponse = {
     [key: string]: unknown;
 };
+
+export type GetPendingAssetPartitionsData = {
+    dagId: string;
+    limit?: number;
+    offset?: number;
+};
+
+export type GetPendingAssetPartitionsResponse = PendingPartitionCollectionResponse;
 
 export type ListBackfillsData = {
     dagId: string;
@@ -3901,6 +3938,21 @@ export type $OpenApiTs = {
                 200: {
                     [key: string]: unknown;
                 };
+                /**
+                 * Validation Error
+                 */
+                422: HTTPValidationError;
+            };
+        };
+    };
+    '/ui/dags/{dag_id}/asset_partitions/pending': {
+        get: {
+            req: GetPendingAssetPartitionsData;
+            res: {
+                /**
+                 * Successful Response
+                 */
+                200: PendingPartitionCollectionResponse;
                 /**
                  * Validation Error
                  */

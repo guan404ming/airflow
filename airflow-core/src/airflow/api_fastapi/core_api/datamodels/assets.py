@@ -184,3 +184,29 @@ class CreateAssetEventsBody(StrictBaseModel):
         return v
 
     model_config = ConfigDict(extra="forbid")
+
+
+class PartitionReceivedAsset(BaseModel):
+    """Single received asset info for a pending partition."""
+
+    asset_id: int
+    name: str
+    uri: str
+    source_partition_key: str | None = None
+
+
+class PendingPartitionResponse(BaseModel):
+    """One pending partition entry."""
+
+    partition_key: str
+    created_at: datetime
+    received_count: int
+    total_required: int
+    received_assets: list[PartitionReceivedAsset]
+
+
+class PendingPartitionCollectionResponse(BaseModel):
+    """Pending partition collection response."""
+
+    pending_partitions: list[PendingPartitionResponse]
+    total_entries: int

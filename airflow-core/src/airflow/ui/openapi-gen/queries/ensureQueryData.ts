@@ -153,6 +153,21 @@ export const ensureUseAssetServiceNextRunAssetsData = (queryClient: QueryClient,
   dagId: string;
 }) => queryClient.ensureQueryData({ queryKey: Common.UseAssetServiceNextRunAssetsKeyFn({ dagId }), queryFn: () => AssetService.nextRunAssets({ dagId }) });
 /**
+* Get Pending Asset Partitions
+* Get pending partition runs and their asset fulfillment status for a DAG.
+* @param data The data for the request.
+* @param data.dagId
+* @param data.limit
+* @param data.offset
+* @returns PendingPartitionCollectionResponse Successful Response
+* @throws ApiError
+*/
+export const ensureUseAssetServiceGetPendingAssetPartitionsData = (queryClient: QueryClient, { dagId, limit, offset }: {
+  dagId: string;
+  limit?: number;
+  offset?: number;
+}) => queryClient.ensureQueryData({ queryKey: Common.UseAssetServiceGetPendingAssetPartitionsKeyFn({ dagId, limit, offset }), queryFn: () => AssetService.getPendingAssetPartitions({ dagId, limit, offset }) });
+/**
 * List Backfills
 * @param data The data for the request.
 * @param data.dagId

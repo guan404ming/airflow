@@ -19,7 +19,7 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiBarChart, FiCode, FiUser, FiCalendar } from "react-icons/fi";
+import { FiBarChart, FiCode, FiDatabase, FiUser, FiCalendar } from "react-icons/fi";
 import { LuChartColumn } from "react-icons/lu";
 import { MdDetails, MdOutlineEventNote } from "react-icons/md";
 import { RiArrowGoBackFill } from "react-icons/ri";
@@ -51,6 +51,7 @@ export const Dag = () => {
     { icon: <FiCalendar />, label: translate("tabs.calendar"), value: "calendar" },
     { icon: <FiUser />, label: translate("tabs.requiredActions"), value: "required_actions" },
     { icon: <RiArrowGoBackFill />, label: translate("tabs.backfills"), value: "backfills" },
+    { icon: <FiDatabase />, label: translate("tabs.partitions"), value: "partitions" },
     { icon: <MdOutlineEventNote />, label: translate("tabs.auditLog"), value: "events" },
     { icon: <FiCode />, label: translate("tabs.code"), value: "code" },
     { icon: <MdDetails />, label: translate("tabs.details"), value: "details" },
@@ -115,6 +116,10 @@ export const Dag = () => {
 
   const displayTabs = processedTabs.filter((tab) => {
     if (dag?.timetable_summary === null && tab.value === "backfills") {
+      return false;
+    }
+
+    if (dag?.asset_expression === null && tab.value === "partitions") {
       return false;
     }
 
