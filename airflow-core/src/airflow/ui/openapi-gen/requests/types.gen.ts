@@ -2066,7 +2066,7 @@ export type NodeResponse = {
 export type OklchColor = string;
 
 /**
- * Asset info within a partitioned dag run detail.
+ * Asset info within a partitioned Dag run detail.
  */
 export type PartitionedDagRunAssetResponse = {
     asset_id: number;
@@ -2076,7 +2076,7 @@ export type PartitionedDagRunAssetResponse = {
 };
 
 /**
- * Collection of partitioned dag runs.
+ * Collection of partitioned Dag runs.
  */
 export type PartitionedDagRunCollectionResponse = {
     partitioned_dag_runs: Array<PartitionedDagRunResponse>;
@@ -2089,7 +2089,7 @@ export type PartitionedDagRunCollectionResponse = {
 };
 
 /**
- * Detail of a single partitioned dag run.
+ * Detail of a single partitioned Dag run.
  */
 export type PartitionedDagRunDetailResponse = {
     id: number;
@@ -2107,7 +2107,7 @@ export type PartitionedDagRunDetailResponse = {
 };
 
 /**
- * Single partitioned dag run item.
+ * Single partitioned Dag run item.
  */
 export type PartitionedDagRunResponse = {
     id: number;
