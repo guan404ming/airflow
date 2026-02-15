@@ -44,6 +44,15 @@ type PartitionScheduleProps = {
 const PartitionSchedule = ({ dagId, isLoading, pendingCount }: PartitionScheduleProps) => {
   const { t: translate } = useTranslation("common");
 
+  if (pendingCount === 0) {
+    return (
+      <HStack>
+        <FiDatabase style={{ display: "inline", flexShrink: 0 }} />
+        <Text>{translate("runTypes.asset_triggered")}</Text>
+      </HStack>
+    );
+  }
+
   return (
     <Link asChild color="fg.info">
       <RouterLink to={`/dags/${dagId}/partitioned_dag_runs`}>
