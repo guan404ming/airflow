@@ -164,14 +164,10 @@
   "partitionedDagRun": "Partitioned Dag Run",
   "partitionedDagRun_other": "Partitioned Dag Runs",
   "partitionedDagRunDetail": {
-    "createdDagRunId": "Created Dag Run ID",
-    "id": "ID",
-    "receivedAssets": "Received Assets",
-    "totalRequiredAssets": "Total Required Assets",
-    "updatedAt": "Updated At"
+    "receivedAssets": "Received Assets"
   },
-  "pendingPartitionedDagRun": "{{count}} pending Dag run",
-  "pendingPartitionedDagRun_other": "{{count}} pending Dag runs",
+  "pendingDagRun": "{{count}} Pending Dag Run",
+  "pendingDagRun_other": "{{count}} Pending Dag Runs",
   "reset": "Reset",
   "runId": "Run ID",
   "runTypes": {

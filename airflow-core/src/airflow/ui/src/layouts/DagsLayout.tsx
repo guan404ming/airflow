@@ -29,7 +29,6 @@ export const DagsLayout = ({ children }: PropsWithChildren) => {
     { label: translate("nav.dags"), value: "/dags" },
     { label: translate("dagRun_other"), value: "/dag_runs" },
     { label: translate("taskInstance_other"), value: "/task_instances" },
-    { label: translate("partitionedDagRun_other"), value: "/partitioned_dag_runs" },
   ];
 
   return (

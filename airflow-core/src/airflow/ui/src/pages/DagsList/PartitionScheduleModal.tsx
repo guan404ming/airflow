@@ -16,19 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Box, Link, Text } from "@chakra-ui/react";
+import { Heading, HStack, Text } from "@chakra-ui/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { FiDatabase } from "react-icons/fi";
 
 import { usePartitionedDagRunServiceGetPartitionedDagRuns } from "openapi/queries";
-import type { DagRunState, PartitionedDagRunResponse } from "openapi/requests/types.gen";
+import type { PartitionedDagRunResponse } from "openapi/requests/types.gen";
 import { AssetProgressCell } from "src/components/AssetProgressCell";
 import { DataTable } from "src/components/DataTable";
 import { ErrorAlert } from "src/components/ErrorAlert";
-import { StateBadge } from "src/components/StateBadge";
 import Time from "src/components/Time";
-import { TruncatedText } from "src/components/TruncatedText";
+import { Dialog } from "src/components/ui";
+
+type PartitionScheduleModalProps = {
+  readonly dagId: string;
+  readonly onClose: () => void;
+  readonly open: boolean;
+};
 
 const getColumns = (
   translate: (key: string) => string,
@@ -36,39 +41,8 @@ const getColumns = (
 ): Array<ColumnDef<PartitionedDagRunResponse>> => [
   {
     accessorKey: "partition_key",
-    cell: ({ row }) => (
-      <Link asChild color="fg.info" fontWeight="bold">
-        <RouterLink to={`/partitioned_dag_runs/${dagId}/${encodeURIComponent(row.original.partition_key)}`}>
-          {row.original.partition_key}
-        </RouterLink>
-      </Link>
-    ),
     enableSorting: false,
     header: translate("dagRun.partitionKey"),
-  },
-  {
-    accessorKey: "created_dag_run_id",
-    cell: ({ row }) => {
-      const runId = row.original.created_dag_run_id;
-
-      return runId !== null && runId !== undefined ? (
-        <Link asChild color="fg.info" fontWeight="bold">
-          <RouterLink to={`/dags/${dagId}/runs/${runId}`}>
-            <TruncatedText text={runId} />
-          </RouterLink>
-        </Link>
-      ) : undefined;
-    },
-    enableSorting: false,
-    header: translate("runId"),
-  },
-  {
-    accessorKey: "state",
-    cell: ({ row }) => (
-      <StateBadge state={row.original.state as DagRunState}>{row.original.state}</StateBadge>
-    ),
-    enableSorting: false,
-    header: translate("state"),
   },
   {
     accessorKey: "created_at",
@@ -95,30 +69,42 @@ const getColumns = (
   },
 ];
 
-export const PartitionedDagRuns = () => {
-  const { t: translate } = useTranslation();
-  const { dagId = "" } = useParams();
+export const PartitionScheduleModal = ({ dagId, onClose, open }: PartitionScheduleModalProps) => {
+  const { t: translate } = useTranslation("common");
 
-  const { data, error, isFetching, isLoading } = usePartitionedDagRunServiceGetPartitionedDagRuns({
-    dagId,
-  });
+  const { data, error, isFetching, isLoading } = usePartitionedDagRunServiceGetPartitionedDagRuns(
+    { dagId, hasCreatedDagRunId: false },
+    undefined,
+    { enabled: open },
+  );
 
   const partitionedDagRuns = data?.partitioned_dag_runs ?? [];
   const total = data?.total ?? 0;
-
   const columns = getColumns(translate, dagId);
 
   return (
-    <Box>
-      <ErrorAlert error={error} />
-      <DataTable
-        columns={columns}
-        data={partitionedDagRuns}
-        isFetching={isFetching}
-        isLoading={isLoading}
-        modelName="partitionedDagRun"
-        total={total}
-      />
-    </Box>
+    <Dialog.Root lazyMount onOpenChange={onClose} open={open} scrollBehavior="inside" size="xl" unmountOnExit>
+      <Dialog.Content backdrop>
+        <Dialog.Header>
+          <HStack>
+            <FiDatabase />
+            <Heading size="md">{translate("pendingDagRun", { count: total })}</Heading>
+          </HStack>
+        </Dialog.Header>
+        <Dialog.CloseTrigger />
+        <Dialog.Body>
+          <ErrorAlert error={error} />
+          <DataTable
+            columns={columns}
+            data={partitionedDagRuns}
+            isFetching={isFetching}
+            isLoading={isLoading}
+            modelName="partitionedDagRun"
+            showRowCountHeading={false}
+            total={total}
+          />
+        </Dialog.Body>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 };

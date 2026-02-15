@@ -17,7 +17,6 @@
  * under the License.
  */
 import { Button } from "@chakra-ui/react";
-import { useState } from "react";
 import { FiDatabase } from "react-icons/fi";
 
 import { usePartitionedDagRunServiceGetPartitionedDagRun } from "openapi/queries";
@@ -34,11 +33,7 @@ type Props = {
 };
 
 export const AssetProgressCell = ({ dagId, partitionKey, totalReceived, totalRequired }: Props) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const { data } = usePartitionedDagRunServiceGetPartitionedDagRun({ dagId, partitionKey }, undefined, {
-    enabled: isOpen,
-  });
+  const { data, isLoading } = usePartitionedDagRunServiceGetPartitionedDagRun({ dagId, partitionKey });
 
   const assetExpression = data?.asset_expression as ExpressionType | undefined;
   const assets: Array<PartitionedDagRunAssetResponse> = data?.assets ?? [];
@@ -53,22 +48,10 @@ export const AssetProgressCell = ({ dagId, partitionKey, totalReceived, totalReq
     }));
 
   return (
-    <Popover.Root
-      // eslint-disable-next-line jsx-a11y/no-autofocus -- prevent focus outline
-      autoFocus={false}
-      lazyMount
-      onOpenChange={(details) => {
-        setIsOpen(details.open);
-        if (!details.open) {
-          (document.activeElement as HTMLElement | null)?.blur();
-        }
-      }}
-      open={isOpen}
-      positioning={{ placement: "bottom-end" }}
-      unmountOnExit
-    >
+    // eslint-disable-next-line jsx-a11y/no-autofocus
+    <Popover.Root autoFocus={false} lazyMount positioning={{ placement: "bottom-end" }} unmountOnExit>
       <Popover.Trigger asChild>
-        <Button paddingInline={0} size="sm" variant="ghost">
+        <Button loading={isLoading} paddingInline={0} size="sm" variant="ghost">
           <FiDatabase style={{ display: "inline" }} />
           {`${String(totalReceived)} / ${String(totalRequired)}`}
         </Button>
@@ -76,7 +59,7 @@ export const AssetProgressCell = ({ dagId, partitionKey, totalReceived, totalReq
       <Popover.Content css={{ "--popover-bg": "colors.bg.emphasized" }} width="fit-content">
         <Popover.Arrow />
         <Popover.Body>
-          <AssetExpression events={events} expression={assetExpression ?? undefined} />
+          <AssetExpression events={events} expression={assetExpression} />
         </Popover.Body>
       </Popover.Content>
     </Popover.Root>

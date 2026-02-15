@@ -166,7 +166,6 @@
     "mappedTaskInstances_one": "Task Instance [{{count}}]",
     "mappedTaskInstances_other": "Task Instances [{{count}}]",
     "overview": "Overview",
-    "partitionedDagRun": "Partitioned Dag Runs",
     "renderedTemplates": "Rendered Templates",
     "requiredActions": "Required Actions",
     "runs": "Runs",
