@@ -170,8 +170,8 @@
     "totalRequiredAssets": "Total Required Assets",
     "updatedAt": "Updated At"
   },
-  "pendingPartitionedDagRun": "{{count}} pending partitioned Dag run",
-  "pendingPartitionedDagRun_other": "{{count}} pending partitioned Dag runs",
+  "pendingPartitionedDagRun": "{{count}} pending Dag run",
+  "pendingPartitionedDagRun_other": "{{count}} pending Dag runs",
   "reset": "Reset",
   "runId": "Run ID",
   "runTypes": {
