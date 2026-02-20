@@ -30,7 +30,6 @@ from airflow.models.asset import (
     PartitionedAssetKeyLog,
 )
 from airflow.providers.standard.operators.empty import EmptyOperator
-from airflow.sdk import IdentityMapper
 from airflow.sdk.definitions.asset import Asset
 from airflow.sdk.definitions.timetables.assets import PartitionedAssetTimetable
 
@@ -184,7 +183,7 @@ class TestNextRunAssets:
         asset = Asset(uri="s3://bucket/part", name="part")
         with dag_maker(
             dag_id="part_dag",
-            schedule=PartitionedAssetTimetable(assets=asset, partition_mapper=IdentityMapper()),
+            schedule=PartitionedAssetTimetable(assets=asset),
             serialized=True,
         ):
             EmptyOperator(task_id="t")
