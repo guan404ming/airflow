@@ -22,7 +22,6 @@ from sqlalchemy import select
 
 from airflow.models.asset import AssetEvent, AssetModel, AssetPartitionDagRun, PartitionedAssetKeyLog
 from airflow.providers.standard.operators.empty import EmptyOperator
-from airflow.sdk import IdentityMapper
 from airflow.sdk.definitions.asset import Asset
 from airflow.sdk.definitions.timetables.assets import PartitionedAssetTimetable
 
@@ -111,7 +110,7 @@ class TestGetPartitionedDagRuns:
 
         with dag_maker(
             dag_id="list_dag",
-            schedule=PartitionedAssetTimetable(assets=schedule, partition_mapper=IdentityMapper()),
+            schedule=PartitionedAssetTimetable(assets=schedule),
             serialized=True,
         ):
             EmptyOperator(task_id="t")
@@ -201,7 +200,7 @@ class TestGetPartitionedDagRun:
 
         with dag_maker(
             dag_id="detail_dag",
-            schedule=PartitionedAssetTimetable(assets=schedule, partition_mapper=IdentityMapper()),
+            schedule=PartitionedAssetTimetable(assets=schedule),
             serialized=True,
         ):
             EmptyOperator(task_id="t")
