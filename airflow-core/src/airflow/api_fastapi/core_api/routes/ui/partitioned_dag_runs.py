@@ -189,7 +189,7 @@ def get_pending_partitioned_dag_run(
     if partitioned_dag_run is None:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
-            f"PartitionedDagRun not found for dag={dag_id} partition={partition_key}",
+            f"No PartitionedDagRun for dag={dag_id} partition={partition_key}",
         )
 
     received_subq = (
@@ -200,14 +200,16 @@ def get_pending_partitioned_dag_run(
 
     received_expr = exists(received_subq.where(PartitionedAssetKeyLog.asset_id == AssetModel.id))
 
-    dag_expression_subq = select(DagModel.asset_expression).where(DagModel.dag_id == dag_id).scalar_subquery()
+    asset_expression_subq = (
+        select(DagModel.asset_expression).where(DagModel.dag_id == dag_id).scalar_subquery()
+    )
     asset_rows = session.execute(
         select(
             AssetModel.id,
             AssetModel.uri,
             AssetModel.name,
             received_expr.label("received"),
-            dag_expression_subq.label("dag_expression"),
+            asset_expression_subq.label("asset_expression"),
         )
         .join(DagScheduleAssetReference, DagScheduleAssetReference.asset_id == AssetModel.id)
         .where(DagScheduleAssetReference.dag_id == dag_id, AssetModel.active.has())
@@ -221,7 +223,7 @@ def get_pending_partitioned_dag_run(
         for row in asset_rows
     ]
     total_received = sum(1 for a in assets if a.received)
-    dag_expression = asset_rows[0].dag_expression if asset_rows else None
+    asset_expression = asset_rows[0].asset_expression if asset_rows else None
 
     return PartitionedDagRunDetailResponse(
         id=partitioned_dag_run.id,
@@ -233,5 +235,5 @@ def get_pending_partitioned_dag_run(
         assets=assets,
         total_required=len(assets),
         total_received=total_received,
-        asset_expression=dag_expression,
+        asset_expression=asset_expression,
     )

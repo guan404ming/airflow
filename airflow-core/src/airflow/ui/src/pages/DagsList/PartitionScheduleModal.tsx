@@ -42,7 +42,7 @@ const getColumns = (
   {
     accessorKey: "partition_key",
     enableSorting: false,
-    header: translate("dagRun.partitionKey"),
+    header: translate("dagRun.mappedPartitionKey"),
   },
   {
     accessorKey: "created_at",
