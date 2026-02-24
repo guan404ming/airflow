@@ -164,7 +164,7 @@
   "partitionedDagRun": "Partitioned Dag Run",
   "partitionedDagRun_other": "Partitioned Dag Runs",
   "partitionedDagRunDetail": {
-    "receivedAssets": "Received Assets"
+    "receivedAssetEvents": "Received Asset Events"
   },
   "pendingDagRun": "{{count}} Pending Dag Run",
   "pendingDagRun_other": "{{count}} Pending Dag Runs",

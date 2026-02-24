@@ -65,7 +65,7 @@ const getColumns = (
       />
     ),
     enableSorting: false,
-    header: translate("partitionedDagRunDetail.receivedAssets"),
+    header: translate("partitionedDagRunDetail.receivedAssetEvents"),
   },
 ];
 
