@@ -111,13 +111,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /ui/partitioned_dag_runs/{dag_id}/{partition_key}:
+  /ui/pending_partitioned_dag_run/{dag_id}/{partition_key}:
     get:
       tags:
       - PartitionedDagRun
-      summary: Get Partitioned Dag Run
-      description: Return full details for a single PartitionedDagRun.
-      operationId: get_partitioned_dag_run
+      summary: Get Pending Partitioned Dag Run
+      description: Return full details for pending PartitionedDagRun.
+      operationId: get_pending_partitioned_dag_run
       security:
       - OAuth2PasswordBearer: []
       - HTTPBearer: []

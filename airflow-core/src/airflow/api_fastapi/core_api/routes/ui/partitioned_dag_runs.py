@@ -160,15 +160,15 @@ def get_partitioned_dag_runs(
 
 
 @partitioned_dag_runs_router.get(
-    "/partitioned_dag_runs/{dag_id}/{partition_key}",
+    "/pending_partitioned_dag_run/{dag_id}/{partition_key}",
     dependencies=[Depends(requires_access_asset(method="GET"))],
 )
-def get_partitioned_dag_run(
+def get_pending_partitioned_dag_run(
     dag_id: str,
     partition_key: str,
     session: SessionDep,
 ) -> PartitionedDagRunDetailResponse:
-    """Return full details for a single PartitionedDagRun."""
+    """Return full details for pending PartitionedDagRun."""
     partitioned_dag_run = session.execute(
         select(
             AssetPartitionDagRun.id,
@@ -182,6 +182,7 @@ def get_partitioned_dag_run(
         .where(
             AssetPartitionDagRun.target_dag_id == dag_id,
             AssetPartitionDagRun.partition_key == partition_key,
+            AssetPartitionDagRun.created_dag_run_id.is_(None),
         )
     ).one_or_none()
 

@@ -1512,18 +1512,18 @@ export const ensureUsePartitionedDagRunServiceGetPartitionedDagRunsData = (query
   hasCreatedDagRunId?: boolean;
 } = {}) => queryClient.ensureQueryData({ queryKey: Common.UsePartitionedDagRunServiceGetPartitionedDagRunsKeyFn({ dagId, hasCreatedDagRunId }), queryFn: () => PartitionedDagRunService.getPartitionedDagRuns({ dagId, hasCreatedDagRunId }) });
 /**
-* Get Partitioned Dag Run
-* Return full details for a single PartitionedDagRun.
+* Get Pending Partitioned Dag Run
+* Return full details for pending PartitionedDagRun.
 * @param data The data for the request.
 * @param data.dagId
 * @param data.partitionKey
 * @returns PartitionedDagRunDetailResponse Successful Response
 * @throws ApiError
 */
-export const ensureUsePartitionedDagRunServiceGetPartitionedDagRunData = (queryClient: QueryClient, { dagId, partitionKey }: {
+export const ensureUsePartitionedDagRunServiceGetPendingPartitionedDagRunData = (queryClient: QueryClient, { dagId, partitionKey }: {
   dagId: string;
   partitionKey: string;
-}) => queryClient.ensureQueryData({ queryKey: Common.UsePartitionedDagRunServiceGetPartitionedDagRunKeyFn({ dagId, partitionKey }), queryFn: () => PartitionedDagRunService.getPartitionedDagRun({ dagId, partitionKey }) });
+}) => queryClient.ensureQueryData({ queryKey: Common.UsePartitionedDagRunServiceGetPendingPartitionedDagRunKeyFn({ dagId, partitionKey }), queryFn: () => PartitionedDagRunService.getPendingPartitionedDagRun({ dagId, partitionKey }) });
 /**
 * Get Dependencies
 * Dependencies graph.

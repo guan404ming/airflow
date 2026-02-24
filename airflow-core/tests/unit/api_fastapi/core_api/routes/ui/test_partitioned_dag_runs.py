@@ -159,41 +159,68 @@ class TestGetPartitionedDagRuns:
             assert pdr_resp["total_required"] == num_assets
 
 
-class TestGetPartitionedDagRun:
+class TestGetPendingPartitionedDagRun:
     def test_should_response_401(self, unauthenticated_test_client):
-        response = unauthenticated_test_client.get("/partitioned_dag_runs/any_dag/any_key")
+        response = unauthenticated_test_client.get("/pending_partitioned_dag_run/any_dag/any_key")
         assert response.status_code == 401
 
     def test_should_response_403(self, unauthorized_test_client):
-        response = unauthorized_test_client.get("/partitioned_dag_runs/any_dag/any_key")
+        response = unauthorized_test_client.get("/pending_partitioned_dag_run/any_dag/any_key")
         assert response.status_code == 403
 
-    def test_should_response_404(self, test_client):
-        resp = test_client.get("/partitioned_dag_runs/no_dag/no_key")
+    @pytest.mark.parametrize(
+        ("dag_id", "partition_key", "fulfilled"),
+        [
+            ("no_dag", "no_key", False),
+            ("fulfilled_dag", "2024-07-01", True),
+        ],
+        ids=[
+            "not-found",
+            "fulfilled-excluded",
+        ],
+    )
+    def test_should_response_404(self, test_client, dag_maker, session, dag_id, partition_key, fulfilled):
+        if fulfilled:
+            with dag_maker(
+                dag_id="fulfilled_dag",
+                schedule=PartitionedAssetTimetable(assets=Asset(uri="s3://bucket/ful0", name="ful0")),
+                serialized=True,
+            ):
+                EmptyOperator(task_id="t")
+
+            dr = dag_maker.create_dagrun()
+            dag_maker.sync_dagbag_to_db()
+
+            session.add(
+                AssetPartitionDagRun(
+                    target_dag_id="fulfilled_dag",
+                    partition_key="2024-07-01",
+                    created_dag_run_id=dr.id,
+                )
+            )
+            session.commit()
+
+        resp = test_client.get(f"/pending_partitioned_dag_run/{dag_id}/{partition_key}")
         assert resp.status_code == 404
 
     @pytest.mark.parametrize(
-        ("num_assets", "received_count", "fulfilled"),
+        ("num_assets", "received_count"),
         [
-            (1, 1, False),
-            (1, 0, False),
-            (1, 1, True),
-            (2, 1, False),
-            (2, 2, False),
-            (2, 0, False),
+            (1, 1),
+            (1, 0),
+            (2, 1),
+            (2, 2),
+            (2, 0),
         ],
         ids=[
             "1-asset-received-pending",
             "1-asset-none-received-pending",
-            "1-asset-fulfilled",
             "2-assets-partial-pending",
             "2-assets-all-received-pending",
             "2-assets-none-received-pending",
         ],
     )
-    def test_should_response_200(
-        self, test_client, dag_maker, session, num_assets, received_count, fulfilled
-    ):
+    def test_should_response_200(self, test_client, dag_maker, session, num_assets, received_count):
         uris = [f"s3://bucket/dt{i}" for i in range(num_assets)]
         asset_defs = [Asset(uri=uri, name=f"dt{i}") for i, uri in enumerate(uris)]
         schedule = asset_defs[0] if num_assets == 1 else asset_defs[0] & asset_defs[1]
@@ -205,7 +232,7 @@ class TestGetPartitionedDagRun:
         ):
             EmptyOperator(task_id="t")
 
-        dr = dag_maker.create_dagrun()
+        dag_maker.create_dagrun()
         dag_maker.sync_dagbag_to_db()
 
         assets = {a.uri: a for a in session.scalars(select(AssetModel).where(AssetModel.uri.in_(uris)))}
@@ -213,7 +240,7 @@ class TestGetPartitionedDagRun:
         pdr = AssetPartitionDagRun(
             target_dag_id="detail_dag",
             partition_key="2024-07-01",
-            created_dag_run_id=dr.id if fulfilled else None,
+            created_dag_run_id=None,
         )
         session.add(pdr)
         session.flush()
@@ -234,7 +261,7 @@ class TestGetPartitionedDagRun:
             )
         session.commit()
 
-        resp = test_client.get("/partitioned_dag_runs/detail_dag/2024-07-01")
+        resp = test_client.get("/pending_partitioned_dag_run/detail_dag/2024-07-01")
         assert resp.status_code == 200
         body = resp.json()
         assert body["dag_id"] == "detail_dag"
@@ -243,11 +270,7 @@ class TestGetPartitionedDagRun:
         assert body["total_received"] == received_count
         assert len(body["assets"]) == num_assets
         assert body["asset_expression"] is not None
-
-        if fulfilled:
-            assert body["created_dag_run_id"] is not None
-        else:
-            assert body["created_dag_run_id"] is None
+        assert body["created_dag_run_id"] is None
 
         received_uris = {a["asset_uri"] for a in body["assets"] if a["received"]}
         assert received_uris == set(uris[:received_count])

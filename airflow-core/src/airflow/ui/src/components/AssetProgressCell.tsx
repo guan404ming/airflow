@@ -19,7 +19,7 @@
 import { Button } from "@chakra-ui/react";
 import { FiDatabase } from "react-icons/fi";
 
-import { usePartitionedDagRunServiceGetPartitionedDagRun } from "openapi/queries";
+import { usePartitionedDagRunServiceGetPendingPartitionedDagRun } from "openapi/queries";
 import type { PartitionedDagRunAssetResponse } from "openapi/requests/types.gen";
 import { AssetExpression, type ExpressionType } from "src/components/AssetExpression";
 import type { NextRunEvent } from "src/components/AssetExpression/types";
@@ -33,7 +33,7 @@ type Props = {
 };
 
 export const AssetProgressCell = ({ dagId, partitionKey, totalReceived, totalRequired }: Props) => {
-  const { data, isLoading } = usePartitionedDagRunServiceGetPartitionedDagRun({ dagId, partitionKey });
+  const { data, isLoading } = usePartitionedDagRunServiceGetPendingPartitionedDagRun({ dagId, partitionKey });
 
   const assetExpression = data?.asset_expression as ExpressionType | undefined;
   const assets: Array<PartitionedDagRunAssetResponse> = data?.assets ?? [];

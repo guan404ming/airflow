@@ -796,13 +796,13 @@ export const UsePartitionedDagRunServiceGetPartitionedDagRunsKeyFn = ({ dagId, h
   dagId?: string;
   hasCreatedDagRunId?: boolean;
 } = {}, queryKey?: Array<unknown>) => [usePartitionedDagRunServiceGetPartitionedDagRunsKey, ...(queryKey ?? [{ dagId, hasCreatedDagRunId }])];
-export type PartitionedDagRunServiceGetPartitionedDagRunDefaultResponse = Awaited<ReturnType<typeof PartitionedDagRunService.getPartitionedDagRun>>;
-export type PartitionedDagRunServiceGetPartitionedDagRunQueryResult<TData = PartitionedDagRunServiceGetPartitionedDagRunDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
-export const usePartitionedDagRunServiceGetPartitionedDagRunKey = "PartitionedDagRunServiceGetPartitionedDagRun";
-export const UsePartitionedDagRunServiceGetPartitionedDagRunKeyFn = ({ dagId, partitionKey }: {
+export type PartitionedDagRunServiceGetPendingPartitionedDagRunDefaultResponse = Awaited<ReturnType<typeof PartitionedDagRunService.getPendingPartitionedDagRun>>;
+export type PartitionedDagRunServiceGetPendingPartitionedDagRunQueryResult<TData = PartitionedDagRunServiceGetPendingPartitionedDagRunDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+export const usePartitionedDagRunServiceGetPendingPartitionedDagRunKey = "PartitionedDagRunServiceGetPendingPartitionedDagRun";
+export const UsePartitionedDagRunServiceGetPendingPartitionedDagRunKeyFn = ({ dagId, partitionKey }: {
   dagId: string;
   partitionKey: string;
-}, queryKey?: Array<unknown>) => [usePartitionedDagRunServiceGetPartitionedDagRunKey, ...(queryKey ?? [{ dagId, partitionKey }])];
+}, queryKey?: Array<unknown>) => [usePartitionedDagRunServiceGetPendingPartitionedDagRunKey, ...(queryKey ?? [{ dagId, partitionKey }])];
 export type DependenciesServiceGetDependenciesDefaultResponse = Awaited<ReturnType<typeof DependenciesService.getDependencies>>;
 export type DependenciesServiceGetDependenciesQueryResult<TData = DependenciesServiceGetDependenciesDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
 export const useDependenciesServiceGetDependenciesKey = "DependenciesServiceGetDependencies";

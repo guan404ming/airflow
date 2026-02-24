@@ -3522,12 +3522,12 @@ export type GetPartitionedDagRunsData = {
 
 export type GetPartitionedDagRunsResponse = PartitionedDagRunCollectionResponse;
 
-export type GetPartitionedDagRunData = {
+export type GetPendingPartitionedDagRunData = {
     dagId: string;
     partitionKey: string;
 };
 
-export type GetPartitionedDagRunResponse = PartitionedDagRunDetailResponse;
+export type GetPendingPartitionedDagRunResponse = PartitionedDagRunDetailResponse;
 
 export type GetDependenciesData = {
     dependencyType?: 'scheduling' | 'data';
@@ -6733,9 +6733,9 @@ export type $OpenApiTs = {
             };
         };
     };
-    '/ui/partitioned_dag_runs/{dag_id}/{partition_key}': {
+    '/ui/pending_partitioned_dag_run/{dag_id}/{partition_key}': {
         get: {
-            req: GetPartitionedDagRunData;
+            req: GetPendingPartitionedDagRunData;
             res: {
                 /**
                  * Successful Response
