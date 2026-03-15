@@ -24,7 +24,6 @@ from typing import Literal, cast
 import sqlalchemy as sa
 import structlog
 from croniter.croniter import croniter
-from pendulum import DateTime
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
@@ -37,8 +36,7 @@ from airflow.api_fastapi.core_api.datamodels.ui.calendar import (
 from airflow.models.dagrun import DagRun
 from airflow.serialization.definitions.dag import SerializedDAG
 from airflow.timetables._cron import CronMixin
-from airflow.timetables.base import DataInterval, TimeRestriction
-from airflow.timetables.simple import ContinuousTimetable
+from airflow.timetables.base import DagRunInfo, DataInterval, TimeRestriction
 from airflow.utils.sqlalchemy import get_dialect_name
 
 log = structlog.get_logger(logger_name=__name__)
@@ -95,7 +93,8 @@ class CalendarService:
         """Get historical DAG runs from the database."""
         dialect = get_dialect_name(session)
 
-        time_expression = self._get_time_truncation_expression(DagRun.logical_date, granularity, dialect)
+        effective_date = sa.func.coalesce(DagRun.partition_date, DagRun.logical_date)
+        time_expression = self._get_time_truncation_expression(effective_date, granularity, dialect)
 
         select_stmt = (
             sa.select(
@@ -103,6 +102,8 @@ class CalendarService:
                 DagRun.state,
                 sa.func.max(DagRun.data_interval_start).label("data_interval_start"),
                 sa.func.max(DagRun.data_interval_end).label("data_interval_end"),
+                sa.func.max(DagRun.run_after).label("run_after"),
+                sa.func.max(DagRun.partition_date).label("partition_date"),
                 sa.func.count("*").label("count"),
             )
             .where(DagRun.dag_id == dag_id)
@@ -110,6 +111,7 @@ class CalendarService:
             .order_by(time_expression.asc())
         )
 
+        logical_date.attribute = effective_date
         select_stmt = logical_date.to_orm(select_stmt)
         dag_states = session.execute(select_stmt).all()
 
@@ -136,31 +138,53 @@ class CalendarService:
         if not self._should_calculate_planned_runs(dag, raw_dag_states):
             return []
 
-        last_data_interval = self._get_last_data_interval(raw_dag_states)
-        if not last_data_interval:
-            return []
+        last_state = raw_dag_states[-1]
+        is_partitioned = dag.timetable.partitioned
 
-        year = last_data_interval.end.year
+        if is_partitioned:
+            last_run_after = timezone.coerce_datetime(last_state.run_after)
+            last_partition_date = timezone.coerce_datetime(last_state.partition_date)
+            if not last_run_after or not last_partition_date:
+                return []
+            year = last_partition_date.year
+            last_info = DagRunInfo(
+                run_after=last_run_after,
+                partition_date=last_partition_date,
+                partition_key=None,
+                data_interval=None,
+            )
+        else:
+            last_data_interval = self._get_last_data_interval(raw_dag_states)
+            if not last_data_interval:
+                return []
+            year = last_data_interval.end.year
+            if isinstance(dag.timetable, CronMixin):
+                return self._calculate_cron_planned_runs(
+                    dag, last_data_interval, year, logical_date, granularity
+                )
+            last_info = DagRunInfo(
+                run_after=last_data_interval.end,
+                data_interval=last_data_interval,
+                partition_date=None,
+                partition_key=None,
+            )
+
         restriction = TimeRestriction(
             timezone.coerce_datetime(dag.start_date) if dag.start_date else None,
             timezone.coerce_datetime(dag.end_date) if dag.end_date else None,
             False,
         )
 
-        if isinstance(dag.timetable, CronMixin):
-            return self._calculate_cron_planned_runs(dag, last_data_interval, year, logical_date, granularity)
         return self._calculate_timetable_planned_runs(
-            dag, last_data_interval, year, restriction, logical_date, granularity
+            dag, last_info, year, restriction, logical_date, granularity
         )
 
     def _should_calculate_planned_runs(self, dag: SerializedDAG, raw_dag_states: Sequence[Row]) -> bool:
         """Check if we should calculate planned runs."""
-        return (
-            bool(raw_dag_states)
-            and bool(raw_dag_states[-1].data_interval_start)
-            and bool(raw_dag_states[-1].data_interval_end)
-            and not isinstance(dag.timetable, ContinuousTimetable)
-        )
+        if not raw_dag_states or not dag.timetable.periodic:
+            return False
+        last = raw_dag_states[-1]
+        return bool(last.data_interval_start and last.data_interval_end) or bool(last.partition_date)
 
     def _get_last_data_interval(self, raw_dag_states: Sequence[Row]) -> DataInterval | None:
         """Extract the last data interval from raw database results."""
@@ -210,7 +234,7 @@ class CalendarService:
     def _calculate_timetable_planned_runs(
         self,
         dag: SerializedDAG,
-        last_data_interval: DataInterval,
+        last_info: DagRunInfo,
         year: int,
         restriction: TimeRestriction,
         logical_date: RangeFilter,
@@ -218,39 +242,36 @@ class CalendarService:
     ) -> list[CalendarTimeRangeResponse]:
         """Calculate planned runs for generic timetables."""
         dates: dict[datetime, int] = collections.Counter()
-        prev_logical_date = DateTime.min
+        prev_run_after = last_info.run_after
         total_planned = 0
 
         while total_planned < self.MAX_PLANNED_RUNS:
-            curr_info = dag.timetable.next_dagrun_info(
-                last_automated_data_interval=last_data_interval,
+            curr_info = dag.timetable.next_dagrun_info_v2(
+                last_dagrun_info=last_info,
                 restriction=restriction,
             )
 
-            if curr_info is None:  # No more DAG runs to schedule
+            if curr_info is None:
                 break
-            if not curr_info.logical_date:
-                # todo: AIP-76 this is likely a partitioned dag. needs implementation
-                break
-            if curr_info.logical_date <= prev_logical_date:  # Timetable not progressing, stopping
-                break
-            if curr_info.logical_date.year != year:  # Crossed year boundary
+            if curr_info.run_after <= prev_run_after:
                 break
 
-            if not curr_info.data_interval:
-                # todo: AIP-76 this is likely a partitioned dag. needs implementation
+            effective_date = curr_info.partition_date or curr_info.logical_date
+            if not effective_date:
+                break
+            if effective_date.year != year:
                 break
 
-            if not self._is_date_in_range(curr_info.logical_date, logical_date):
-                last_data_interval = curr_info.data_interval
-                prev_logical_date = curr_info.logical_date
+            if not self._is_date_in_range(effective_date, logical_date):
+                last_info = curr_info
+                prev_run_after = curr_info.run_after
                 total_planned += 1
                 continue
 
-            last_data_interval = curr_info.data_interval
-            dt = self._truncate_datetime_for_granularity(curr_info.logical_date, granularity)
+            dt = self._truncate_datetime_for_granularity(effective_date, granularity)
             dates[dt] += 1
-            prev_logical_date = curr_info.logical_date
+            last_info = curr_info
+            prev_run_after = curr_info.run_after
             total_planned += 1
 
         return [
@@ -259,7 +280,7 @@ class CalendarService:
 
     def _get_time_truncation_expression(
         self,
-        column: InstrumentedAttribute[datetime | None],
+        column: InstrumentedAttribute[datetime | None] | sa.sql.elements.ColumnElement,
         granularity: Literal["hourly", "daily"],
         dialect: str | None,
     ) -> sa.sql.elements.ColumnElement:

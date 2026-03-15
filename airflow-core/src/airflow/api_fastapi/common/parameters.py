@@ -603,9 +603,9 @@ class Range(BaseModel, Generic[T]):
 class RangeFilter(BaseParam[Range]):
     """Filter on range in between the lower and upper bound."""
 
-    def __init__(self, value: Range | None, attribute: InstrumentedAttribute) -> None:
+    def __init__(self, value: Range | None, attribute: InstrumentedAttribute | ColumnElement) -> None:
         super().__init__(value)
-        self.attribute: InstrumentedAttribute = attribute
+        self.attribute: InstrumentedAttribute | ColumnElement = attribute
 
     def to_orm(self, select: Select) -> Select:
         if self.skip_none is False:
