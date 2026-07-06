@@ -182,6 +182,11 @@ export const Grid = ({
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
+  // Trailing padding must live on the scrolled content, not the scroll container:
+  // Firefox excludes a scroll container's inline-end padding from the scrollable
+  // overflow area, letting the macOS overlay scrollbar cover the latest run.
+  const scrollEndPadding = showGantt ? 0 : 6;
+
   const gridHeaderAndBody = (
     <>
       {/* Grid header, both bgs are needed to hide elements during horizontal and vertical scroll */}
@@ -197,7 +202,7 @@ export const Grid = ({
           </Flex>
         </Box>
         {/* Duration bars */}
-        <Flex flexDirection="row-reverse" flexShrink={0}>
+        <Flex flexDirection="row-reverse" flexShrink={0} pr={scrollEndPadding}>
           <Flex flexShrink={0} position="relative">
             <DurationAxis top={`${GRID_HEADER_HEIGHT_PX}px`} />
             <DurationAxis top={`${GRID_HEADER_HEIGHT_PX / 2}px`} />
@@ -231,7 +236,7 @@ export const Grid = ({
         <Box bg="bg" left={0} position="sticky" zIndex={1} {...taskNameColumnStyles}>
           <TaskNames nodes={flatNodes} onRowClick={handleRowClick} virtualItems={virtualItems} />
         </Box>
-        <Flex flexDirection="row-reverse" flexShrink={0}>
+        <Flex flexDirection="row-reverse" flexShrink={0} pr={scrollEndPadding}>
           {gridRuns?.map((dr: GridRunsResponse) => (
             <TaskInstancesColumn
               key={dr.run_id}
@@ -268,7 +273,6 @@ export const Grid = ({
           marginRight={showGantt ? 0 : 1}
           minH={0}
           overflow="auto"
-          paddingRight={showGantt ? 0 : 6}
           position="relative"
           ref={scrollContainerRef}
         >
