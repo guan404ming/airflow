@@ -1105,7 +1105,16 @@ describe("coordinator runtime integration", () => {
               body: {
                 type: "ErrorResponse",
                 error: "API_SERVER_ERROR",
-                detail: { status_code: 404 },
+                detail: {
+                  status_code: 404,
+                  message: "Server returned error",
+                  detail: {
+                    detail: {
+                      reason: "not_found",
+                      message: "Dag with dag_id: 'missing' not found",
+                    },
+                  },
+                },
               },
             },
           ],
@@ -1114,7 +1123,7 @@ describe("coordinator runtime integration", () => {
 
       expect(result.firstResponse!.body).toMatchObject({
         type: "RetryTask",
-        retry_reason: "TriggerDagRun failed: API_SERVER_ERROR",
+        retry_reason: expect.stringContaining("Dag with dag_id: 'missing' not found"),
       });
     });
 
