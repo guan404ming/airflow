@@ -181,6 +181,20 @@ describe("writes do not read a supervisor 404 as absence", () => {
   });
 });
 
+describe("supervisor error detail", () => {
+  const detail = { status_code: 500, message: "Server returned error" };
+
+  it.each([
+    ["frame error", { body: null, error: { error: "API_SERVER_ERROR", detail } }],
+    ["ErrorResponse body", { body: { type: "ErrorResponse", error: "API_SERVER_ERROR", detail } }],
+  ])("is kept in the thrown message for a %s", async (_name, frame) => {
+    const c = client([frame]);
+    await expect(c.setVariable("k", "v")).rejects.toThrow(
+      `PutVariable failed: API_SERVER_ERROR ${JSON.stringify(detail)}`,
+    );
+  });
+});
+
 describe("getXCom not-found contract", () => {
   it("returns null for the exact XCOM_NOT_FOUND code", async () => {
     const c = client([{ body: { type: "ErrorResponse", error: "XCOM_NOT_FOUND" } }]);

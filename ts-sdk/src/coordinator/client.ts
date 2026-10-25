@@ -234,7 +234,8 @@ export function createCoordinatorClient(
         return null;
       }
       logs?.warning(`${op} failed`, { error: err.code });
-      throw new Error(`${op} failed: ${err.code}`);
+      const detail = err.detail == null ? "" : ` ${JSON.stringify(err.detail)}`;
+      throw new Error(`${op} failed: ${err.code}${detail}`);
     }
     const body = frame.body as Record<string, unknown> | null;
     if (expectedType !== null && body?.type !== expectedType) {
@@ -473,9 +474,10 @@ export function createCoordinatorClient(
 interface FrameError {
   code: string;
   statusCode?: number;
+  detail?: unknown;
 }
 
-/** Extract the error code and optional HTTP status from a response frame.
+/** Extract the error code, optional HTTP status, and detail from a response frame.
  *  Returns `null` for non-error frames. */
 function parseFrameError(frame: { body: unknown; error?: unknown }): FrameError | null {
   // Case 1: error field on the frame itself
@@ -485,7 +487,7 @@ function parseFrameError(frame: { body: unknown; error?: unknown }): FrameError 
       const e = frame.error as Record<string, unknown>;
       if (typeof e.error === "string") {
         const detail = e.detail as { status_code?: number } | undefined;
-        return { code: e.error, statusCode: detail?.status_code };
+        return { code: e.error, statusCode: detail?.status_code, detail };
       }
     }
   }
@@ -493,7 +495,7 @@ function parseFrameError(frame: { body: unknown; error?: unknown }): FrameError 
   const body = frame.body as Record<string, unknown> | null;
   if (body?.type === "ErrorResponse" && typeof body.error === "string") {
     const detail = body.detail as { status_code?: number } | undefined;
-    return { code: body.error, statusCode: detail?.status_code };
+    return { code: body.error, statusCode: detail?.status_code, detail };
   }
   return null;
 }
