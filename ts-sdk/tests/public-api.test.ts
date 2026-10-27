@@ -407,6 +407,9 @@ describe("public API", () => {
       readonly runId: string;
       readonly tryNumber: number;
       readonly mapIndex: number;
+      readonly logicalDate: Date | null;
+      readonly dataIntervalStart: Date | null;
+      readonly dataIntervalEnd: Date | null;
       readonly signal: AbortSignal;
     }>();
     expectTypeOf<GetXComOpts>().toEqualTypeOf<{

@@ -35,6 +35,9 @@ function makeScope(taskId: string): TaskScope {
     runId: "r1",
     tryNumber: 1,
     mapIndex: -1,
+    logicalDate: null,
+    dataIntervalStart: null,
+    dataIntervalEnd: null,
     signal: new AbortController().signal,
   };
   // Identity is all these tests read, so a cast beats a full fake client.

@@ -38,6 +38,12 @@ export interface TaskContext {
   readonly tryNumber: number;
   /** -1 for non-mapped tasks, 0..N-1 for mapped instances. */
   readonly mapIndex: number;
+  /** Logical date of the Dag run, or `null` when the run has none. */
+  readonly logicalDate: Date | null;
+  /** Start of the Dag run data interval, or `null` when the run has none. */
+  readonly dataIntervalStart: Date | null;
+  /** End of the Dag run data interval, or `null` when the run has none. */
+  readonly dataIntervalEnd: Date | null;
   /**
    * AbortSignal that fires when Airflow terminates the task subprocess
    * with SIGTERM or SIGINT.
