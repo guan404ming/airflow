@@ -19,7 +19,10 @@
 import {
   UseDagRunServiceGetDagRunsKeyFn,
   UseDagServiceGetDagDetailsKeyFn,
+  useDagServiceGetDagRunStateCountsUiKey,
+  useDagServiceGetDagsUiKey,
   UseDagServiceGetLatestRunInfoKeyFn,
+  useDagServiceGetRecentTaskInstanceStateCountsUiKey,
   UseGridServiceGetDagStructureKeyFn,
   UseGridServiceGetGridRunsKeyFn,
   UseGridServiceGetLoopHistoryKeyFn,
@@ -48,4 +51,10 @@ export const tiPerAttemptQueryKeys = [
   [useTaskInstanceServiceGetLogKey],
   [useTaskInstanceServiceGetExtraLinksKey],
   [useTaskInstanceServiceGetTaskInstanceTryDetailsKey],
+] as const;
+
+export const dagsListQueryKeys = [
+  [useDagServiceGetDagsUiKey],
+  [useDagServiceGetDagRunStateCountsUiKey],
+  [useDagServiceGetRecentTaskInstanceStateCountsUiKey],
 ] as const;

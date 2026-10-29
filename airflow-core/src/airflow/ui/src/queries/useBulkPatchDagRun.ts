@@ -34,7 +34,7 @@ import type { BulkBody_BulkDAGRunBody_, BulkResponse } from "openapi/requests/ty
 
 import { toaster } from "src/system-components";
 
-import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { dagsListQueryKeys, gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
 import { useClearDagRunDryRunKey } from "./useClearDagRunDryRun";
 
 type Props = {
@@ -59,6 +59,7 @@ export const useBulkPatchDagRun = ({ deselectKeys, onSuccessConfirm }: Props) =>
       queryClient.invalidateQueries({ queryKey: [useTaskInstanceServiceGetMappedTaskInstanceKey] }),
       queryClient.invalidateQueries({ queryKey: [useGanttServiceGetGanttDataKey] }),
       ...tiPerAttemptQueryKeys.map((key) => queryClient.invalidateQueries({ queryKey: key })),
+      ...dagsListQueryKeys.map((key) => queryClient.invalidateQueries({ queryKey: key })),
       ...[...affectedDagIds.current].flatMap((dagId) => [
         ...gridQueryKeys(dagId).map((key) => queryClient.invalidateQueries({ queryKey: key })),
         queryClient.invalidateQueries({ queryKey: [useClearDagRunDryRunKey, dagId] }),
