@@ -48,6 +48,7 @@ export interface OperatorContextDeps {
   readonly client: CoordinatorClient;
   readonly logs: LogChannel;
   readonly fail: OperatorContext["fail"];
+  readonly doXcomPush: boolean;
 }
 
 /** Run `operator`: its `execute` on the first run, `executeComplete` on the run that resumes it. */
@@ -75,7 +76,7 @@ function failedToResume(op: OperatorContext, kwargs: Record<string, unknown>) {
 }
 
 export function buildOperatorContext(deps: OperatorContextDeps): OperatorContext {
-  const { details, dag, ctx, client, logs, fail } = deps;
+  const { details, dag, ctx, client, logs, fail, doXcomPush } = deps;
   return {
     details,
     dag,
@@ -93,7 +94,7 @@ export function buildOperatorContext(deps: OperatorContextDeps): OperatorContext
       return bound.args;
     },
     async succeed(value?: JsonValue): Promise<RuntimeSucceedTask> {
-      if (value !== undefined) await client.setXCom({ key: "return_value", value });
+      if (doXcomPush && value !== undefined) await client.setXCom({ key: "return_value", value });
       // The Execution API's TISuccessStatePayload validator rejects null for
       // `task_outlets` and `outlet_events`, so both are empty lists.
       return {

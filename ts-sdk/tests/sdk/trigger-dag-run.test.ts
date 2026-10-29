@@ -87,6 +87,7 @@ describe("triggerDagRun", () => {
       kind: "operator",
       operator: record.operator,
       dag,
+      doXcomPush: true,
     });
   });
 

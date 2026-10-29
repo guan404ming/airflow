@@ -55,7 +55,7 @@ export interface OperatorContext {
   readonly logs: LogChannel;
   /** Bind the task's declared inputs, applying the `withArgNames` renames of `argNames`. */
   resolveArgs(argNames?: ReadonlyMap<string, string>): Promise<object>;
-  /** Push `value` under `return_value` when it is given, then succeed. */
+  /** Push `value` under `return_value` when it is given and `doXcomPush` is not false, then succeed. */
   succeed(value?: JsonValue): Promise<RuntimeSucceedTask>;
   /** Fail, or hand the task back for retry when it has retries left. */
   fail(message: string): RuntimeRetryTask | RuntimeTaskState;

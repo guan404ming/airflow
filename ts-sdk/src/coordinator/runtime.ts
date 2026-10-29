@@ -367,7 +367,7 @@ async function handleTask(
   const ctx = buildContext(details, signal);
   const client = createCoordinatorClient(comm, ctx, ti.id, clientLogs);
   if (task.kind === "handler") {
-    return runHandler(details, task.fn, ctx, client, logs);
+    return runHandler(details, task.fn, ctx, client, logs, task.doXcomPush);
   }
 
   // How an operator ends the task as a failure: log the reason, then report the task
@@ -382,7 +382,15 @@ async function handleTask(
       case "operator":
         return await runOperator(
           task.operator,
-          buildOperatorContext({ details, dag: task.dag, ctx, client, logs, fail }),
+          buildOperatorContext({
+            details,
+            dag: task.dag,
+            ctx,
+            client,
+            logs,
+            fail,
+            doXcomPush: task.doXcomPush,
+          }),
         );
     }
   } catch (err) {
@@ -397,6 +405,7 @@ async function runHandler(
   ctx: TaskContext,
   client: CoordinatorClient,
   logs: LogChannel,
+  doXcomPush: boolean,
 ): Promise<RuntimeSucceedTask | RuntimeRetryTask | RuntimeTaskState> {
   let bound: BoundArgs;
   try {
@@ -424,7 +433,7 @@ async function runHandler(
     // follows the handler across every `await` it makes, so `getContext()` and
     // `getClient()` work at any depth without the handler being handed either.
     const result = await runInTaskScope({ ctx, client }, () => handler(bound.args as never));
-    if (result !== undefined) {
+    if (doXcomPush && result !== undefined) {
       await client.setXCom({ key: "return_value", value: result as JsonValue });
     }
     // SucceedTask MUST include task_outlets and outlet_events as
