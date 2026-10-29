@@ -218,9 +218,10 @@ export function validateOwnBundle(value: unknown, accessor: string): asserts val
  * A `handler` runs the author's function. An `operator` is one the SDK runs itself,
  * with no handler: its options come from the factory the task was declared with.
  */
-export type BundleTask =
+export type BundleTask = (
   | { readonly kind: "handler"; readonly fn: TaskFunction }
-  | { readonly kind: "operator"; readonly operator: Operator<never, unknown>; readonly dag: Dag };
+  | { readonly kind: "operator"; readonly operator: Operator<never, unknown>; readonly dag: Dag }
+) & { readonly doXcomPush: boolean };
 
 /** Internal: the task `taskId` of Dag `dagId`, or `undefined` when this bundle does not provide it. */
 export function getBundleTask(
@@ -232,13 +233,14 @@ export function getBundleTask(
   if (dag === undefined) {
     // A Dag declared in Python: the bundle holds only handlers for its stub tasks.
     const fn = taskHandlersOf(bundle).get(dagId)?.get(taskId);
-    return fn === undefined ? undefined : { kind: "handler", fn };
+    return fn === undefined ? undefined : { kind: "handler", fn, doXcomPush: true };
   }
   // A Dag declared in TypeScript: the task's record says what runs it.
   const record = getDagTaskRecords(dag).get(taskId);
   if (record === undefined) return undefined;
-  if (record.operator) return { kind: "operator", operator: record.operator, dag };
-  return { kind: "handler", fn: record.fn };
+  const doXcomPush = record.spec.doXcomPush ?? true;
+  if (record.operator) return { kind: "operator", operator: record.operator, dag, doXcomPush };
+  return { kind: "handler", fn: record.fn, doXcomPush };
 }
 
 /** Internal: finalize every Dag this bundle declared in TypeScript, so no task

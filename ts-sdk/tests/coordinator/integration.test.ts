@@ -973,6 +973,15 @@ describe("coordinator runtime integration", () => {
     expect(setXComReqs).toHaveLength(0);
   });
 
+  it("does NOT push return_value XCom when the task sets doXcomPush to false", async () => {
+    testDag.task("quiet", async () => "my-result", { doXcomPush: false })();
+
+    const result = await driveSupervisor(makeStartupDetails("quiet"));
+
+    expect(result.firstResponse!.body).toMatchObject({ type: "SucceedTask" });
+    expect(requestsOf(result, "SetXCom")).toEqual([]);
+  });
+
   describe("triggerDagRun", () => {
     const DAG_STATE_TRIGGER = "airflow.providers.standard.triggers.external_task.DagStateTrigger";
     const OK = { body: { type: "OKResponse", ok: true } };
@@ -1654,6 +1663,15 @@ describe("coordinator runtime integration", () => {
           value: expect.objectContaining({ chosenOptions: ["Reject"] }),
         }),
       ]);
+    });
+
+    it("pushes no response when the task sets doXcomPush to false", async () => {
+      testDag.task("decide", approval({ subject: "Go?" }), { doXcomPush: false })();
+
+      const result = await resumedWith("decide", answer(["Approve"]));
+
+      expect(result.firstResponse!.body).toMatchObject({ type: "SucceedTask" });
+      expect(result.runtimeRequests).toEqual([]);
     });
 
     it("on Reject fails with failOnReject, before pushing anything", async () => {

@@ -531,8 +531,8 @@ throw outside it. Await everything the handler starts: work still running after 
 after Airflow has recorded the task's result.
 
 A value the handler returns becomes the task's ``return_value`` XCom, as with Python's ``@task``, and is what a
-downstream task receives. An uncaught exception or a rejected promise fails the task, and retries it if the task
-has retries.
+downstream task receives. A task that sets ``doXcomPush: false`` pushes no ``return_value``. An uncaught
+exception or a rejected promise fails the task, and retries it if the task has retries.
 
 The ``TaskClient``
 ~~~~~~~~~~~~~~~~~~

@@ -53,6 +53,7 @@ function makeContext(tiContext: Record<string, unknown> = {}) {
     client: { setXCom, skipDownstreamTasks } as unknown as CoordinatorClient,
     logs: { error } as unknown as LogChannel,
     fail: fail as unknown as OperatorContext["fail"],
+    doXcomPush: true,
   });
   return { op, setXCom, skipDownstreamTasks, error, fail };
 }
