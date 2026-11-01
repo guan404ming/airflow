@@ -20,9 +20,14 @@ import type { PropsWithChildren } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { useDagRunServiceGetExecutionKey } from "openapi/queries";
+import {
+  useDagRunServiceGetExecutionKey,
+  UseDagServiceGetDagRunStateCountsUiKeyFn,
+  UseDagServiceGetDagsUiKeyFn,
+  UseDagServiceGetRecentTaskInstanceStateCountsUiKeyFn,
+} from "openapi/queries";
 import { TaskInstanceService } from "openapi/requests";
 
 import { useClearTaskInstances } from "./useClearTaskInstances";
@@ -79,4 +84,37 @@ it("invalidates the Dag named in each request when one clear spans several Dags"
 
   expect(queryClient.getQueryState(secondDagRun)?.isInvalidated).toBe(true);
   expect(queryClient.getQueryState(firstDagRun)?.isInvalidated).toBe(false);
+});
+
+describe("Dag card cache", () => {
+  it.each([
+    { name: "Dag list", queryKey: UseDagServiceGetDagsUiKeyFn({ limit: 50 }) },
+    { name: "run-state counts", queryKey: UseDagServiceGetDagRunStateCountsUiKeyFn({ dagIds: ["dag"] }) },
+    {
+      name: "recent task-state counts",
+      queryKey: UseDagServiceGetRecentTaskInstanceStateCountsUiKeyFn({ dagRunIds: [1] }),
+    },
+  ])("invalidates the cached $name before navigating back", async ({ queryKey }) => {
+    vi.spyOn(TaskInstanceService, "postClearTaskInstances").mockResolvedValue({
+      task_instances: [],
+      total_entries: 0,
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
+
+    queryClient.setQueryData(queryKey, { cached: true });
+    const wrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const onSuccessConfirm = vi.fn();
+    const { result } = renderHook(() => useClearTaskInstances({ dagRunId: "run", onSuccessConfirm }), {
+      wrapper,
+    });
+
+    act(() =>
+      result.current.mutate({ dagId: "dag", requestBody: { dag_run_id: "run", task_ids: ["work"] } }),
+    );
+    await waitFor(() => expect(onSuccessConfirm).toHaveBeenCalled());
+
+    expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
+  });
 });

@@ -33,7 +33,7 @@ import type { ClearTaskInstancesBody, TaskInstanceCollectionResponse } from "ope
 
 import { toaster } from "src/system-components";
 
-import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { dagsListQueryKeys, gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
 import { useClearTaskInstancesDryRunKey } from "./useClearTaskInstancesDryRun";
 import { usePatchTaskInstanceDryRunKey } from "./usePatchTaskInstanceDryRun";
 
@@ -103,6 +103,7 @@ export const useClearTaskInstances = ({
       [usePatchTaskInstanceDryRunKey, dagId, runId],
       UseGanttServiceGetGanttDataKeyFn({ dagId, runId }),
       ...tiPerAttemptQueryKeys,
+      ...dagsListQueryKeys,
     ];
 
     await Promise.all([

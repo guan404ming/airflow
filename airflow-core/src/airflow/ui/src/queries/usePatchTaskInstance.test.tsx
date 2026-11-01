@@ -20,9 +20,14 @@ import type { PropsWithChildren } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { UseTaskInstanceServiceGetTaskInstanceKeyFn } from "openapi/queries";
+import {
+  UseDagServiceGetDagRunStateCountsUiKeyFn,
+  UseDagServiceGetDagsUiKeyFn,
+  UseDagServiceGetRecentTaskInstanceStateCountsUiKeyFn,
+  UseTaskInstanceServiceGetTaskInstanceKeyFn,
+} from "openapi/queries";
 import { TaskInstanceService } from "openapi/requests";
 
 import { usePatchTaskInstance } from "./usePatchTaskInstance";
@@ -57,4 +62,43 @@ it("invalidates the cached task instance of a region-addressed execution", async
   await waitFor(() => expect(onSuccess).toHaveBeenCalled());
 
   expect(queryClient.getQueryState(cached)?.isInvalidated).toBe(true);
+});
+
+describe("Dag card cache", () => {
+  it.each([
+    { name: "Dag list", queryKey: UseDagServiceGetDagsUiKeyFn({ limit: 50 }) },
+    { name: "run-state counts", queryKey: UseDagServiceGetDagRunStateCountsUiKeyFn({ dagIds: ["dag"] }) },
+    {
+      name: "recent task-state counts",
+      queryKey: UseDagServiceGetRecentTaskInstanceStateCountsUiKeyFn({ dagRunIds: [1] }),
+    },
+  ])("invalidates the cached $name before navigating back", async ({ queryKey }) => {
+    vi.spyOn(TaskInstanceService, "patchTaskInstance").mockResolvedValue({
+      task_instances: [],
+      total_entries: 0,
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
+
+    queryClient.setQueryData(queryKey, { cached: true });
+    const wrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const onSuccess = vi.fn();
+    const { result } = renderHook(
+      () => usePatchTaskInstance({ dagId: "dag", dagRunId: "run", onSuccess, taskId: "work" }),
+      { wrapper },
+    );
+
+    act(() =>
+      result.current.mutate({
+        dagId: "dag",
+        dagRunId: "run",
+        requestBody: { new_state: "success" },
+        taskId: "work",
+      }),
+    );
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+
+    expect(queryClient.getQueryState(queryKey)?.isInvalidated).toBe(true);
+  });
 });
