@@ -20,6 +20,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import {
+  useDagRunServiceGetExecutionKey,
+  UseDagRunServiceGetDagRunKeyFn,
+  useDagRunServiceGetDagRunsKey,
+  UseGanttServiceGetGanttDataKeyFn,
+  useTaskInstanceServiceGetMappedTaskInstanceKey,
+  useTaskInstanceServiceGetTaskInstanceKey,
   useTaskInstanceServiceGetTaskInstancesKey,
   useTaskInstanceServicePatchTaskGroupInstances,
 } from "openapi/queries";
@@ -29,6 +35,7 @@ import { createErrorToaster } from "src/utils";
 import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
 import { useClearTaskInstancesDryRunKey } from "./useClearTaskInstancesDryRun";
 import { usePatchTaskGroupDryRunKey } from "./usePatchTaskGroupDryRun";
+import { usePatchTaskInstanceDryRunKey } from "./usePatchTaskInstanceDryRun";
 
 export const usePatchTaskGroup = ({
   dagId,
@@ -57,9 +64,16 @@ export const usePatchTaskGroup = ({
 
   const onSuccessFn = async () => {
     const queryKeys = [
+      [useDagRunServiceGetExecutionKey, { dagId, dagRunId }],
+      [useTaskInstanceServiceGetTaskInstanceKey, { dagId, dagRunId }],
+      [useTaskInstanceServiceGetMappedTaskInstanceKey, { dagId, dagRunId }],
+      UseDagRunServiceGetDagRunKeyFn({ dagId, dagRunId }),
+      [useDagRunServiceGetDagRunsKey],
       [useTaskInstanceServiceGetTaskInstancesKey],
       [usePatchTaskGroupDryRunKey, dagId, dagRunId, groupId],
+      [usePatchTaskInstanceDryRunKey, dagId, dagRunId],
       [useClearTaskInstancesDryRunKey, dagId],
+      UseGanttServiceGetGanttDataKeyFn({ dagId, runId: dagRunId }),
       ...tiPerAttemptQueryKeys,
     ];
 
