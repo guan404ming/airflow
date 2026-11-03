@@ -340,8 +340,15 @@ describe("public API", () => {
     expectTypeOf<Dag["taskGroup"]>().toEqualTypeOf<
       (groupId: string, options?: TaskGroupOptions) => TaskGroupRef
     >();
-    // Python's prefix_group_id, and the only option a group takes so far.
-    expectTypeOf<TaskGroupOptions>().toEqualTypeOf<{ readonly prefixGroupId?: boolean }>();
+    // The options of Python's TaskGroup, spelled in camelCase.
+    expectTypeOf<TaskGroupOptions>().toEqualTypeOf<{
+      readonly prefixGroupId?: boolean;
+      readonly groupDisplayName?: string;
+      readonly tooltip?: string;
+      readonly docMd?: string;
+      readonly uiColor?: string;
+      readonly uiFgColor?: string;
+    }>();
     expectTypeOf<TaskGroupRef["before"]>().toEqualTypeOf<
       (...downstream: readonly Node[]) => TaskGroupRef
     >();

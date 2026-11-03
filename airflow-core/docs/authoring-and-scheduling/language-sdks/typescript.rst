@@ -294,6 +294,17 @@ Pass ``{ prefixGroupId: false }`` to keep the ids declared in a group as written
 does in Python; they then have to be unique across the Dag. A group id is made of letters, digits, dashes and
 underscores, and is at most 200 characters.
 
+The same object takes the other options of Python's ``TaskGroup``: ``groupDisplayName``, ``tooltip``, ``docMd``,
+``uiColor`` and ``uiFgColor``, each a string the UI shows as it does for a Python group.
+
+.. code-block:: typescript
+
+    const transform = dag.taskGroup("transform", {
+      groupDisplayName: "Transform",
+      tooltip: "cleans the rows",
+      uiColor: "#f0f0f0",
+    });
+
 Conditional branching
 ~~~~~~~~~~~~~~~~~~~~~
 

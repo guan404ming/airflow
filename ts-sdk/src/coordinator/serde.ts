@@ -344,16 +344,19 @@ function taskGroupObject(
       taskGroupObject(childId, child.taskIds, child.childGroupIds, groups, graph),
     ];
   }
+  const group = groupId === null ? undefined : groups.get(groupId)!;
   const own = groupId === null ? undefined : graph.groupEdges.get(groupId);
   return {
     // The local segment: Python's TaskGroup stores the id it was given, and
     // rebuilds the qualified one from where the group sits in the tree.
     _group_id: groupId === null ? null : localGroupId(groupId),
-    group_display_name: "",
-    prefix_group_id: groupId === null || groups.get(groupId)!.prefixGroupId,
-    tooltip: "",
-    ui_color: "CornflowerBlue",
-    ui_fgcolor: "#000",
+    group_display_name: group?.groupDisplayName ?? "",
+    prefix_group_id: group?.prefixGroupId ?? true,
+    tooltip: group?.tooltip ?? "",
+    ui_color: group?.uiColor ?? "CornflowerBlue",
+    ui_fgcolor: group?.uiFgColor ?? "#000",
+    // Python writes doc_md only for a group that has one.
+    ...(group?.docMd !== undefined && { doc_md: group.docMd }),
     children,
     upstream_group_ids: sorted(own?.upstreamGroups),
     downstream_group_ids: sorted(own?.downstreamGroups),
