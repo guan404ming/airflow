@@ -131,7 +131,7 @@ function serializeDagDependencies(
   return (record.operator?.getDagDependencies?.() ?? []).map((dependency) => ({
     source: dagId,
     target: dependency.target,
-    label: taskId,
+    label: record.spec.taskDisplayName || taskId,
     dependency_type: dependency.dependencyType,
     dependency_id: taskId,
   }));

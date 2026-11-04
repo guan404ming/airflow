@@ -32,7 +32,8 @@
 // property of the "operator" definition becomes a task field, in schema
 // order, unless one of these rules skips it:
 //
-//   - "_"-prefixed keys are serializer internals (_task_module, _is_mapped, ...)
+//   - "_"-prefixed keys are serializer internals (_task_module, _is_mapped, ...),
+//     except _task_display_name, which Python's task_display_name argument sets
 //   - keys in the definition's "required" list are written by the serializer
 //     itself (task_type, ui_color, ...)
 //   - "has_on_*" keys are flags derived from Python callbacks, not settable
@@ -200,7 +201,11 @@ export const UNEXPRESSIBLE_DAG_FIELDS = {
 
 /** Whether the serializer, not the author, owns `key` in `definition`. */
 function isSerializerOwned(key, required) {
-  return key.startsWith("_") || required.has(key) || key.startsWith("has_on_");
+  return (
+    (key.startsWith("_") && key !== "_task_display_name") ||
+    required.has(key) ||
+    key.startsWith("has_on_")
+  );
 }
 
 /**
@@ -369,9 +374,9 @@ export function selectDagFields(schema) {
   return fields;
 }
 
-/** `max_active_tis_per_dag` -> `maxActiveTisPerDag`. */
+/** `max_active_tis_per_dag` -> `maxActiveTisPerDag`, `_task_display_name` -> `taskDisplayName`. */
 export function toCamelCase(key) {
-  return key.replace(/_(.)/g, (_match, char) => char.toUpperCase());
+  return key.replace(/^_/, "").replace(/_(.)/g, (_match, char) => char.toUpperCase());
 }
 
 const LICENSE_HEADER = `/*!

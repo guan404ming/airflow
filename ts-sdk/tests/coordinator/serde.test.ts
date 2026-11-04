@@ -421,7 +421,13 @@ describe("serializeDag", () => {
       const task = taskVar(
         serializeWith(
           {},
-          { retries: 2, queue: "typescript", retryDelay: 600, executionTimeout: 5 },
+          {
+            retries: 2,
+            queue: "typescript",
+            retryDelay: 600,
+            executionTimeout: 5,
+            taskDisplayName: "Load rows",
+          },
         ),
       );
       expect(task).toMatchObject({
@@ -429,6 +435,7 @@ describe("serializeDag", () => {
         queue: "typescript",
         retry_delay: 600,
         execution_timeout: 5,
+        _task_display_name: "Load rows",
       });
     });
 
