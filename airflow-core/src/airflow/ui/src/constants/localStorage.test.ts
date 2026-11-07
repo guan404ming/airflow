@@ -19,6 +19,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  openGroupsKey,
+  pruneLegacyAllGroupsKeys,
   pruneLegacyDependencyKeys,
   pruneLegacyTagFilterKeys,
   SHOW_ALL_DEPENDENCIES_KEY,
@@ -77,5 +79,23 @@ describe("pruneLegacyTagFilterKeys", () => {
     pruneLegacyTagFilterKeys();
 
     expect(globalThis.localStorage.length).toBe(1);
+  });
+});
+
+describe("pruneLegacyAllGroupsKeys", () => {
+  afterEach(() => {
+    globalThis.localStorage.clear();
+  });
+
+  it("removes the per-Dag group lists, leaving everything else intact", () => {
+    globalThis.localStorage.setItem("my_dag/all-groups", JSON.stringify(["group"]));
+    globalThis.localStorage.setItem("other_dag/all-groups", JSON.stringify(["group"]));
+    globalThis.localStorage.setItem(openGroupsKey("my_dag"), JSON.stringify(["group"]));
+
+    pruneLegacyAllGroupsKeys();
+
+    expect(globalThis.localStorage.getItem("my_dag/all-groups")).toBeNull();
+    expect(globalThis.localStorage.getItem("other_dag/all-groups")).toBeNull();
+    expect(globalThis.localStorage.getItem(openGroupsKey("my_dag"))).toBe(JSON.stringify(["group"]));
   });
 });
