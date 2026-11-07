@@ -23,7 +23,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { NodeResponse } from "openapi/requests/types.gen";
 
-import { allGroupsKey, DEFAULT_TASK_GROUPS_EXPANDED_KEY, openGroupsKey } from "src/constants/localStorage";
+import { DEFAULT_TASK_GROUPS_EXPANDED_KEY, openGroupsKey } from "src/constants/localStorage";
 
 import { GroupsProvider } from "./GroupsProvider";
 import { useGroups } from "./useGroups";
@@ -125,12 +125,11 @@ describe("task group defaults", () => {
       expect(localStorage.getItem(openGroupsKey("example"))).toBeNull();
     },
   );
-  it("removes the saved group list when the Dag has no groups", () => {
-    localStorage.setItem(allGroupsKey("example"), JSON.stringify(["group"]));
-    structure.nodes = [];
-    renderHook(useGroups, { wrapper });
+  it("keeps the group list out of localStorage", () => {
+    const { result } = renderHook(useGroups, { wrapper });
 
-    expect(localStorage.getItem(allGroupsKey("example"))).toBeNull();
+    expect(result.current.allGroupIds).toEqual(["group", "group.nested"]);
+    expect(localStorage.length).toBe(0);
   });
   it("toggles a group when localStorage is full", async () => {
     vi.spyOn(localStorage, "setItem").mockImplementation(() => {

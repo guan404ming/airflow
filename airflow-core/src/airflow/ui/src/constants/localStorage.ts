@@ -45,7 +45,6 @@ export const DAGS_LIST_SHOW_RECENT_TASKS_KEY = "dags_list_show_recent_tasks";
 export const dagRunsLimitKey = (dagId: string) => `dag_runs_limit-${dagId}`;
 export const directionKey = (dagId: string) => `direction-${dagId}`;
 export const openGroupsKey = (dagId: string) => `${dagId}/open-groups`;
-export const allGroupsKey = (dagId: string) => `${dagId}/all-groups`;
 
 // Page-scoped keys
 export const tableSortKey = (pageName: string) => `${pageName.replaceAll("/", "-").slice(1)}-table-sort`;
@@ -57,22 +56,29 @@ export const presetFiltersDefaultKey = (pageName: string) =>
 // SearchBar advanced (substring) toggle, scoped per searchbar via a caller-provided id.
 export const advancedSearchKey = (id: string) => `advanced_search-${id}`;
 
-// One-time cleanup of the pre-consolidation per-Dag dependency toggle keys
-// (`dependencies-<dag_id>`), now superseded by the global SHOW_ALL_DEPENDENCIES_KEY. Without this
-// they linger in every user's localStorage forever. Safe because no current key shares the prefix.
-export const pruneLegacyDependencyKeys = (storage: Storage = globalThis.localStorage): void => {
+const removeKeys = (storage: Storage, isStale: (key: string) => boolean): void => {
   const staleKeys: Array<string> = [];
 
   for (let index = 0; index < storage.length; index += 1) {
     const key = storage.key(index);
 
-    if (key?.startsWith("dependencies-")) {
+    if (key !== null && isStale(key)) {
       staleKeys.push(key);
     }
   }
 
   staleKeys.forEach((key) => storage.removeItem(key));
 };
+
+// One-time cleanup of the pre-consolidation per-Dag dependency toggle keys
+// (`dependencies-<dag_id>`), now superseded by the global SHOW_ALL_DEPENDENCIES_KEY. Without this
+// they linger in every user's localStorage forever. Safe because no current key shares the prefix.
+export const pruneLegacyDependencyKeys = (storage: Storage = globalThis.localStorage): void =>
+  removeKeys(storage, (key) => key.startsWith("dependencies-"));
+
+// One-time cleanup of the per-Dag task group lists (`<dag_id>/all-groups`), now kept in memory.
+export const pruneLegacyAllGroupsKeys = (storage: Storage = globalThis.localStorage): void =>
+  removeKeys(storage, (key) => key.endsWith("/all-groups"));
 
 // One-time cleanup of the per-browser tag-filter persistence (`tags` / `tags_match_mode`) that
 // predates preset filters (#63273). Tags are URL-driven now like every other filter, and preset

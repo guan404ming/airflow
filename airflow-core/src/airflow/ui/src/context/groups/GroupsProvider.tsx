@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 
 import { useDebouncedCallback } from "use-debounce";
 import { useLocalStorage } from "usehooks-ts";
@@ -25,7 +25,7 @@ import { useStructureServiceStructureData } from "openapi/queries";
 
 import { flattenGraphNodes } from "src/layouts/Details/Grid/utils";
 
-import { allGroupsKey, openGroupsKey } from "src/constants/localStorage";
+import { openGroupsKey } from "src/constants/localStorage";
 import useSelectedVersion from "src/hooks/useSelectedVersion";
 import { useDefaultTaskGroupsExpanded } from "src/hooks/useUserSettings";
 
@@ -43,10 +43,7 @@ export const GroupsProvider = ({ children, dagId }: Props) => {
     groupIds: Array<string>;
   }>();
   const [defaultTaskGroupsExpanded] = useDefaultTaskGroupsExpanded();
-  const [allGroupIds, setStoredAllGroupIds, removeStoredAllGroupIds] = useLocalStorage<Array<string>>(
-    allGroupsKey(dagId),
-    [],
-  );
+  const [allGroupIds, setAllGroupIds] = useState<Array<string>>([]);
 
   const allGroupIdsRef = useRef(allGroupIds);
 
@@ -82,17 +79,6 @@ export const GroupsProvider = ({ children, dagId }: Props) => {
       setStoredOpenGroupIds(groupIds);
     }
   };
-
-  const setAllGroupIds = useCallback(
-    (groupIds: Array<string>) => {
-      if (groupIds.length === 0) {
-        removeStoredAllGroupIds();
-      } else {
-        setStoredAllGroupIds(groupIds);
-      }
-    },
-    [removeStoredAllGroupIds, setStoredAllGroupIds],
-  );
 
   useEffect(() => {
     if (JSON.stringify(observedGroupIds) !== JSON.stringify(allGroupIdsRef.current)) {
