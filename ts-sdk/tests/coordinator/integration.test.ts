@@ -130,7 +130,10 @@ function makeStartupDetails(
     dag_rel_path: "test.py",
     bundle_info: { name: "test", version: null },
     start_date: "2026-04-23T00:00:00Z",
-    ti_context: tiContext,
+    ti_context: {
+      dag_run: { run_after: "2026-04-23T00:00:00Z", run_type: "manual" },
+      ...tiContext,
+    },
     sentry_integration: "",
   };
 }
@@ -287,6 +290,8 @@ describe("coordinator runtime integration", () => {
       tryNumber: 1,
       mapIndex: -1,
       conf: {},
+      runAfter: new Date("2026-04-23T00:00:00Z"),
+      runType: "manual",
     });
     expect(result.logRecords.some((r) => r["event"] === "[ts-sdk.runtime] Task succeeded")).toBe(
       true,
@@ -316,6 +321,25 @@ describe("coordinator runtime integration", () => {
 
     expect(result.firstResponse!.body).toMatchObject({ type: "SucceedTask" });
     expect(observedConf).toEqual(conf);
+  });
+
+  it("hands a handler the Dag run's runAfter and runType", async () => {
+    let observedCtx: unknown = null;
+    testDag.task("read_run_after", async () => {
+      observedCtx = getContext();
+    })();
+
+    const result = await driveSupervisor(
+      makeStartupDetails("read_run_after", "test_dag", "r1", {
+        dag_run: { run_after: "2026-01-02T03:04:05Z", run_type: "scheduled" },
+      }),
+    );
+
+    expect(result.firstResponse!.body).toMatchObject({ type: "SucceedTask" });
+    expect(observedCtx).toMatchObject({
+      runAfter: new Date("2026-01-02T03:04:05Z"),
+      runType: "scheduled",
+    });
   });
 
   it("hands a handler an empty conf when the Dag run has none", async () => {

@@ -498,13 +498,16 @@ function responseType(body: unknown): string {
 }
 
 function buildContext(details: StartupDetails, signal: AbortSignal): TaskContext {
+  const dagRun = details.ti_context.dag_run;
   return {
     dagId: details.ti.dag_id,
     taskId: details.ti.task_id,
     runId: details.ti.run_id,
     tryNumber: details.ti.try_number,
     mapIndex: details.ti.map_index ?? -1,
-    conf: (details.ti_context.dag_run?.conf ?? {}) as TaskContext["conf"],
+    conf: (dagRun.conf ?? {}) as TaskContext["conf"],
+    runAfter: new Date(dagRun.run_after),
+    runType: dagRun.run_type,
     signal,
   };
 }

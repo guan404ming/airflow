@@ -410,6 +410,14 @@ describe("public API", () => {
       readonly tryNumber: number;
       readonly mapIndex: number;
       readonly conf: Readonly<Record<string, JsonValue>>;
+      readonly runAfter: Date;
+      readonly runType:
+        | "backfill"
+        | "scheduled"
+        | "manual"
+        | "operator_triggered"
+        | "asset_triggered"
+        | "asset_materialization";
       readonly signal: AbortSignal;
     }>();
     expectTypeOf<GetXComOpts>().toEqualTypeOf<{
