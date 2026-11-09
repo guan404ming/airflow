@@ -34,7 +34,7 @@ import { toaster } from "src/system-components";
 
 import { createErrorToaster } from "src/utils";
 
-import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { dagListQueryKeys, gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
 
 type DeleteTaskInstanceParams = {
   dagId: string;
@@ -69,6 +69,7 @@ export const useDeleteTaskInstance = ({
     const queryKeys = [
       UseDagRunServiceGetDagRunKeyFn({ dagId, dagRunId }),
       [useDagRunServiceGetDagRunsKey],
+      ...dagListQueryKeys,
       [useTaskInstanceServiceGetTaskInstancesKey],
       [useTaskInstanceServiceGetTaskInstanceKey, { dagId, dagRunId, mapIndex, taskId }],
       [useTaskInstanceServiceGetHitlDetailsKey],

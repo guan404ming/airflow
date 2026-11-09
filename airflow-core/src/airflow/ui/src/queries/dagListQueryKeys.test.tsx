@@ -29,8 +29,10 @@ import { useBulkPatchDagRun } from "./useBulkPatchDagRun";
 import { useClearDagRun } from "./useClearRun";
 import { useClearTaskInstances } from "./useClearTaskInstances";
 import { useCreateBackfill } from "./useCreateBackfill";
+import { useDeleteTaskInstance } from "./useDeleteTaskInstance";
 import { usePatchDagRun } from "./usePatchDagRun";
 import { useTrigger } from "./useTrigger";
+import { useUpdateHITLDetail } from "./useUpdateHITLDetail";
 
 vi.mock("openapi/queries", async (importOriginal) => {
   const actual = await importOriginal<typeof OpenapiQueries>();
@@ -43,7 +45,9 @@ vi.mock("openapi/queries", async (importOriginal) => {
     useDagRunServiceClearDagRuns: vi.fn(),
     useDagRunServicePatchDagRun: vi.fn(),
     useDagRunServiceTriggerDagRun: vi.fn(),
+    useTaskInstanceServiceDeleteTaskInstance: vi.fn(),
     useTaskInstanceServicePostClearTaskInstances: vi.fn(),
+    useTaskInstanceServiceUpdateHitlDetail: vi.fn(),
   };
 });
 
@@ -101,6 +105,20 @@ describe.each([
     generatedHook: queries.useTaskInstanceServicePostClearTaskInstances,
     operation: "clearing task instances",
     useMutation: () => useClearTaskInstances({ dagRunId: "run", onSuccessConfirm: vi.fn() }),
+  },
+  {
+    args: [],
+    generatedHook: queries.useTaskInstanceServiceDeleteTaskInstance,
+    operation: "deleting a task instance",
+    useMutation: () =>
+      useDeleteTaskInstance({ dagId: "dag", dagRunId: "run", onSuccessConfirm: vi.fn(), taskId: "task" }),
+  },
+  {
+    args: [],
+    generatedHook: queries.useTaskInstanceServiceUpdateHitlDetail,
+    operation: "answering a human-in-the-loop task",
+    useMutation: () =>
+      useUpdateHITLDetail({ dagId: "dag", dagRunId: "run", mapIndex: undefined, taskId: "task" }),
   },
 ])("Dag cards after $operation", ({ args, generatedHook, useMutation }) => {
   beforeEach(() => {
