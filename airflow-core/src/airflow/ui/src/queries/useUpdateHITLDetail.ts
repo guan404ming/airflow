@@ -23,7 +23,6 @@ import { useTranslation } from "react-i18next";
 
 import {
   UseDagRunServiceGetDagRunKeyFn,
-  useDagServiceGetDagsUiKey,
   useDagRunServiceGetDagRunsKey,
   UseGanttServiceGetGanttDataKeyFn,
   useTaskInstanceServiceGetHitlDetailsKey,
@@ -39,7 +38,7 @@ import { toaster } from "src/system-components";
 import { createErrorToaster, getApiErrorDetail, getErrorStatus } from "src/utils";
 import type { HITLResponseParams } from "src/utils/hitl";
 
-import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { dagListQueryKeys, gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
 
 export const useUpdateHITLDetail = ({
   dagId,
@@ -67,7 +66,7 @@ export const useUpdateHITLDetail = ({
       [useDagRunServiceGetDagRunsKey],
       [useTaskInstanceServiceGetTaskInstancesKey, { dagId, dagRunId }],
       [useTaskInstanceServiceGetTaskInstanceKey, { dagId, dagRunId, mapIndex, taskId }],
-      [useDagServiceGetDagsUiKey],
+      ...dagListQueryKeys,
       [useTaskInstanceServiceGetHitlDetailsKey],
       [useTaskInstanceServiceGetHitlDetailKey, { dagId, dagRunId }],
       [useTaskInstanceServiceGetHitlDetailTryDetailKey, { dagId, dagRunId }],

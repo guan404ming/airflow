@@ -29,7 +29,7 @@ import {
 
 import { createErrorToaster } from "src/utils";
 
-import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { dagListQueryKeys, gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
 import { useClearTaskInstancesDryRunKey } from "./useClearTaskInstancesDryRun";
 import { usePatchTaskInstanceDryRunKey } from "./usePatchTaskInstanceDryRun";
 
@@ -69,6 +69,7 @@ export const usePatchTaskInstance = ({
       [useClearTaskInstancesDryRunKey, dagId],
       [useTaskInstanceServiceGetMappedTaskInstanceKey, { dagId, dagRunId, taskId }],
       ...tiPerAttemptQueryKeys,
+      ...dagListQueryKeys,
     ];
 
     await Promise.all([
