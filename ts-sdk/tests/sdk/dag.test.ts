@@ -403,6 +403,40 @@ describe("Dag", () => {
     expect(dag.taskIds).toEqual([]);
   });
 
+  it("reports a misspelled task option at compile time", () => {
+    const dag = new Dag("example_dag");
+    const group = dag.taskGroup("checks");
+    const misspellsAnOption = () => {
+      dag.task(
+        "transform",
+        async () => undefined,
+        // @ts-expect-error -- `retryyDelay` is not an option, and the error is on it.
+        { retryyDelay: 10 },
+      );
+      group.task(
+        "transform",
+        async () => undefined,
+        // @ts-expect-error -- `retryyDelay` is not an option, and the error is on it.
+        { retryyDelay: 10 },
+      );
+      // @ts-expect-error -- every overload is listed, so the error is on the call.
+      dag.task(
+        async function load() {
+          await Promise.resolve();
+        },
+        { retryyDelay: 10 },
+      );
+      // @ts-expect-error -- every overload is listed, so the error is on the call.
+      group.task(
+        async function load() {
+          await Promise.resolve();
+        },
+        { retryyDelay: 10 },
+      );
+    };
+    expect(misspellsAnOption).toBeTypeOf("function");
+  });
+
   it.each(["", " "])("rejects the blank queue %j in the Dag spec", (queue) => {
     expect(() => new Dag("example_dag", { queue })).toThrowError(
       'queue in the spec for Dag "example_dag" must not be blank',
