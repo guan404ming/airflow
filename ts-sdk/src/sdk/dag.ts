@@ -222,7 +222,7 @@ export interface TaskGroupRef extends Node {
   /** Declare a task in this group; its id carries the group prefix unless it is turned off. */
   task<TArgs extends object | void = void, TReturn = unknown>(
     taskId: string,
-    handler: (args: TArgs) => TReturn | Promise<TReturn>,
+    handlerOrOperator: ((args: TArgs) => TReturn | Promise<TReturn>) | Operator<TArgs, TReturn>,
     options?: TaskOptions,
   ): TaskFactory<TArgs, TReturn>;
   /** Declare a task whose id is the handler's function name, prefixed the same way. */
@@ -231,11 +231,6 @@ export interface TaskGroupRef extends Node {
     options?: TaskOptions,
   ): TaskFactory<TArgs, TReturn>;
   /** Declare a task an operator runs, such as `triggerDagRun(...)`, prefixed the same way. */
-  task<TArgs extends object | void = void, TResult = unknown>(
-    taskId: string,
-    operator: Operator<TArgs, TResult>,
-    options?: TaskOptions,
-  ): TaskFactory<TArgs, TResult>;
   task<TArgs extends object | void = void, TResult = unknown>(
     operator: Operator<TArgs, TResult>,
     options: TaskOptions,
@@ -734,8 +729,9 @@ export class Dag {
    * A handler takes one object of named arguments, and every argument in it
    * becomes an input of the returned {@link TaskFactory}; `getContext()` and
    * `getClient()` reach the runtime from inside the call, so neither is an
-   * argument. The trailing options object carries this task's own
-   * {@link TaskSpec}.
+   * argument. An operator, such as `triggerDagRun(spec)`, stands in for the
+   * handler, and the inputs and result are then the operator's own. The
+   * trailing options object carries this task's own {@link TaskSpec}.
    *
    * ```ts
    * const extract = dag.task("extract", async () => 42);
@@ -744,7 +740,7 @@ export class Dag {
    */
   task<TArgs extends object | void = void, TReturn = unknown>(
     taskId: string,
-    handler: (args: TArgs) => TReturn | Promise<TReturn>,
+    handlerOrOperator: ((args: TArgs) => TReturn | Promise<TReturn>) | Operator<TArgs, TReturn>,
     options?: TaskOptions,
   ): TaskFactory<TArgs, TReturn>;
   /**
@@ -762,11 +758,6 @@ export class Dag {
    * Declare a task an operator runs, such as `triggerDagRun(spec)`. Its inputs and result are the
    * operator's own. It has no handler to take an id from, so the id is required.
    */
-  task<TArgs extends object | void = void, TResult = unknown>(
-    taskId: string,
-    operator: Operator<TArgs, TResult>,
-    options?: TaskOptions,
-  ): TaskFactory<TArgs, TResult>;
   task<TArgs extends object | void = void, TResult = unknown>(
     operator: Operator<TArgs, TResult>,
     options: TaskOptions,
