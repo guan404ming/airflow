@@ -26,6 +26,7 @@ import { IconButton } from "src/system-components";
 
 import DeleteDialog from "src/components/DeleteDialog";
 
+import { useDagsListSearch } from "src/context/dagsListSearch";
 import { useDeleteDag } from "src/queries/useDeleteDag";
 
 type DeleteDagButtonProps = {
@@ -37,6 +38,7 @@ export const DeleteDagButton = ({ dagDisplayName, dagId, ...rest }: DeleteDagBut
   const { onClose, onOpen, open } = useDisclosure();
   const navigate = useNavigate();
   const location = useLocation();
+  const dagsListSearch = useDagsListSearch();
   const { t: translate } = useTranslation("dags");
 
   const isOnDagDetailPage = location.pathname.includes(`/dags/${dagId}`);
@@ -46,7 +48,7 @@ export const DeleteDagButton = ({ dagDisplayName, dagId, ...rest }: DeleteDagBut
     onSuccessConfirm: () => {
       onClose();
       if (isOnDagDetailPage) {
-        void Promise.resolve(navigate("/dags"));
+        void Promise.resolve(navigate({ pathname: "/dags", search: dagsListSearch }));
       }
     },
   });

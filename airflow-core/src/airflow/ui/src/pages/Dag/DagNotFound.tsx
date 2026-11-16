@@ -22,12 +22,15 @@ import { useNavigate } from "react-router-dom";
 
 import { Logo } from "src/components/Logo";
 
+import { useDagsListSearch } from "src/context/dagsListSearch";
+
 type DagNotFoundProps = {
   readonly dagId: string;
 };
 
 export const DagNotFound = ({ dagId }: DagNotFoundProps) => {
   const navigate = useNavigate();
+  const dagsListSearch = useDagsListSearch();
   const { t: translate } = useTranslation("dag");
 
   return (
@@ -53,7 +56,7 @@ export const DagNotFound = ({ dagId }: DagNotFoundProps) => {
             </Button>
             <Button
               onClick={() => {
-                void Promise.resolve(navigate("/dags"));
+                void Promise.resolve(navigate({ pathname: "/dags", search: dagsListSearch }));
               }}
               size="lg"
               variant="outline"
