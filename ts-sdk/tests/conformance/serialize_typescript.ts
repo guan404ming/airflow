@@ -39,6 +39,7 @@ import {
   Dag,
   Label,
   type DagSpec,
+  type TaskGroupOptions,
   type TaskGroupRef,
   type TaskRef,
   type TaskSpec,
@@ -51,10 +52,16 @@ interface TaskCase {
   readonly spec?: Readonly<Record<string, unknown>>;
 }
 
+// A group is its qualified id, or that id with the options of the group by their serialized names.
+interface GroupCase {
+  readonly id: string;
+  readonly spec?: Readonly<Record<string, unknown>>;
+}
+
 interface DagCase {
   readonly dag_id: string;
   readonly spec?: Readonly<Record<string, unknown>>;
-  readonly groups?: readonly string[];
+  readonly groups?: readonly (string | GroupCase)[];
   readonly tasks: readonly TaskCase[];
   readonly order_edges?: readonly (readonly [string, string, string?])[];
 }
@@ -80,6 +87,15 @@ function authoringNames(table: Readonly<Record<string, SchemaField>>): Map<strin
 
 const DAG_NAMES = authoringNames(DAG_SCHEMA_FIELDS);
 const TASK_NAMES = authoringNames(TASK_SCHEMA_FIELDS);
+// A group has no generated table: its options are the keys Python's TaskGroup takes.
+const GROUP_NAMES = new Map([
+  ["prefix_group_id", "prefixGroupId"],
+  ["group_display_name", "groupDisplayName"],
+  ["tooltip", "tooltip"],
+  ["doc_md", "docMd"],
+  ["ui_color", "uiColor"],
+  ["ui_fgcolor", "uiFgColor"],
+]);
 
 function toAuthoringSpec(
   spec: Readonly<Record<string, unknown>>,
@@ -106,10 +122,12 @@ function buildDag(dagCase: DagCase): Dag {
   );
   // A group id is fully qualified, so its parent is whatever comes before the last dot.
   const groups = new Map<string, TaskGroupRef>();
-  for (const groupId of dagCase.groups ?? []) {
+  for (const entry of dagCase.groups ?? []) {
+    const { id: groupId, spec } = typeof entry === "string" ? { id: entry } : entry;
     const cut = groupId.lastIndexOf(".");
     const scope = cut === -1 ? dag : groups.get(groupId.slice(0, cut))!;
-    groups.set(groupId, scope.taskGroup(groupId.slice(cut + 1)));
+    const options = toAuthoringSpec(spec ?? {}, GROUP_NAMES, `${dagCase.dag_id}.${groupId}`);
+    groups.set(groupId, scope.taskGroup(groupId.slice(cut + 1), options as TaskGroupOptions));
   }
 
   const factories = new Map<string, (inputs: Record<string, TaskRef>) => TaskRef>();

@@ -73,6 +73,8 @@ export interface GeneratedDagFields {
  * Optional on the same terms as {@link GeneratedDagFields}.
  */
 export interface GeneratedTaskFields {
+  /** Maps to the schema key `_task_display_name`. */
+  readonly taskDisplayName?: string;
   /** Maps to the schema key `owner` (schema default `"airflow"`). */
   readonly owner?: string;
   /** Maps to the schema key `start_date`. */
@@ -173,6 +175,7 @@ export const DAG_SCHEMA_FIELDS = {
 
 /** Schema key, wire type and default of every {@link GeneratedTaskFields} field. */
 export const TASK_SCHEMA_FIELDS = {
+  taskDisplayName: { key: "_task_display_name", type: "string" },
   owner: { key: "owner", type: "string", default: "airflow" },
   startDate: { key: "start_date", type: "datetime" },
   endDate: { key: "end_date", type: "datetime" },

@@ -421,7 +421,13 @@ describe("serializeDag", () => {
       const task = taskVar(
         serializeWith(
           {},
-          { retries: 2, queue: "typescript", retryDelay: 600, executionTimeout: 5 },
+          {
+            retries: 2,
+            queue: "typescript",
+            retryDelay: 600,
+            executionTimeout: 5,
+            taskDisplayName: "Load rows",
+          },
         ),
       );
       expect(task).toMatchObject({
@@ -429,6 +435,7 @@ describe("serializeDag", () => {
         queue: "typescript",
         retry_delay: 600,
         execution_timeout: 5,
+        _task_display_name: "Load rows",
       });
     });
 
@@ -778,6 +785,39 @@ describe("serializeDag", () => {
         prefix_group_id: false,
         children: { nulls: ["operator", "nulls"] },
       });
+    });
+
+    it("writes the options of a group as Python's TaskGroup does", () => {
+      const dag = new Dag("d");
+      const transform = dag.taskGroup("transform", {
+        groupDisplayName: "Transform",
+        tooltip: "cleans the rows",
+        docMd: "# transform",
+        uiColor: "#f0f0f0",
+        uiFgColor: "#101010",
+      });
+      place(transform, "clean");
+      place(transform.taskGroup("checks"), "nulls");
+
+      const [, group] = (rootGroup(dag)["children"] as Json)["transform"] as [string, Json];
+      expect(group).toMatchObject({
+        _group_id: "transform",
+        group_display_name: "Transform",
+        prefix_group_id: true,
+        tooltip: "cleans the rows",
+        ui_color: "#f0f0f0",
+        ui_fgcolor: "#101010",
+        doc_md: "# transform",
+      });
+      // A group without options keeps Python's defaults, and no doc_md key at all.
+      const [, checks] = (group["children"] as Json)["transform.checks"] as [string, Json];
+      expect(checks).toMatchObject({
+        group_display_name: "",
+        tooltip: "",
+        ui_color: "CornflowerBlue",
+        ui_fgcolor: "#000",
+      });
+      expect(checks).not.toHaveProperty("doc_md");
     });
 
     it("keeps a grouped task out of the root group's children", () => {

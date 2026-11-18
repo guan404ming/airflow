@@ -123,6 +123,11 @@ describe("task field selection", () => {
     expect(keys).not.toContain(schemaKey);
   });
 
+  it("admits the display name Python's task_display_name argument sets", () => {
+    const field = selectTaskFields(readSchema()).find((f) => f.key === "_task_display_name");
+    expect(field).toMatchObject({ name: "taskDisplayName", tsType: "string" });
+  });
+
   it("fails when an exclusion no longer matches an eligible schema key", () => {
     const [excluded] = Object.keys(EXCLUDED_TASK_FIELDS);
     const schema = buildSchema({
@@ -338,6 +343,7 @@ describe("property resolution", () => {
     expect(toCamelCase("max_active_tis_per_dag")).toBe("maxActiveTisPerDag");
     expect(toCamelCase("do_xcom_push")).toBe("doXcomPush");
     expect(toCamelCase("owner")).toBe("owner");
+    expect(toCamelCase("_task_display_name")).toBe("taskDisplayName");
   });
 });
 

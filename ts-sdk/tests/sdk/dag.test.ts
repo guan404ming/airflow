@@ -1155,6 +1155,16 @@ describe("Dag", () => {
         /prefixGroupId for Dag "grouped" task group "checks" must be a boolean/,
       ],
       [
+        "a groupDisplayName that is not a string",
+        { groupDisplayName: 7 },
+        /groupDisplayName for Dag "grouped" task group "checks" must be a string/,
+      ],
+      [
+        "a uiColor that is not a string",
+        { uiColor: null },
+        /uiColor for Dag "grouped" task group "checks" must be a string/,
+      ],
+      [
         "options that are not an object",
         7,
         /options for Dag "grouped" task group "checks" must be an object/,
@@ -1164,6 +1174,41 @@ describe("Dag", () => {
 
       expect(() => dag.taskGroup("checks", options as never)).toThrowError(expected);
       expect(getDagTaskGroups(dag).size).toBe(0);
+    });
+
+    it("records the options it was declared with, as given", () => {
+      const dag = new Dag("grouped");
+      dag.taskGroup("transform", {
+        groupDisplayName: "Transform",
+        tooltip: "cleans the rows",
+        docMd: "# transform",
+        uiColor: "#f0f0f0",
+        uiFgColor: "#101010",
+      });
+
+      expect(getDagTaskGroups(dag).get("transform")).toEqual({
+        groupId: "transform",
+        prefixGroupId: true,
+        groupDisplayName: "Transform",
+        tooltip: "cleans the rows",
+        docMd: "# transform",
+        uiColor: "#f0f0f0",
+        uiFgColor: "#101010",
+        taskIds: [],
+        childGroupIds: [],
+      });
+    });
+
+    it("treats an option set to undefined as unset", () => {
+      const dag = new Dag("grouped");
+      dag.taskGroup("checks", { prefixGroupId: undefined, tooltip: undefined });
+
+      expect(getDagTaskGroups(dag).get("checks")).toEqual({
+        groupId: "checks",
+        prefixGroupId: true,
+        taskIds: [],
+        childGroupIds: [],
+      });
     });
 
     describe("its ID, which follows Python's validate_group_key", () => {

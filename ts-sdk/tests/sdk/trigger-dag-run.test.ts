@@ -174,6 +174,20 @@ describe("triggerDagRun", () => {
     ]);
   });
 
+  it("labels the dependency with the task display name", () => {
+    const { dag } = triggered({}, { taskDisplayName: "Trigger the ETL" });
+
+    expect(serialize(dag).serialized["dag_dependencies"]).toEqual([
+      {
+        source: "d",
+        target: "downstream_etl",
+        label: "Trigger the ETL",
+        dependency_type: "trigger",
+        dependency_id: "trigger_downstream",
+      },
+    ]);
+  });
+
   it("inherits the Dag's queue, so it runs where the Dag's other tasks run", () => {
     const dag = new Dag("d", { queue: "typescript" });
     dag.task("extract", async () => undefined)();

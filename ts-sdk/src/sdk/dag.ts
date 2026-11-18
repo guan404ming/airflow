@@ -255,6 +255,19 @@ export interface TaskGroupOptions {
    * across the Dag.
    */
   readonly prefixGroupId?: boolean;
+  /** Name the UI shows for the group instead of its id, as `group_display_name`. */
+  readonly groupDisplayName?: string;
+  /** Tooltip of the group's node in the UI. */
+  readonly tooltip?: string;
+  /** Markdown documentation of the group, shown in the UI. */
+  readonly docMd?: string;
+  /**
+   * Fill color of the group's node in the graph view: a raw color (a hex code
+   * or a CSS name) or a Chakra token such as `blue.500`, as `ui_color`.
+   */
+  readonly uiColor?: string;
+  /** Label color of the group's node in the graph view, in the same forms as `uiColor`. */
+  readonly uiFgColor?: string;
 }
 
 /**
@@ -288,8 +301,11 @@ export interface EdgeLabelling {
 // A task id cannot hold a NUL, so a joined pair cannot collide with one.
 const EDGE_KEY_SEPARATOR = "\u0000";
 
-/** Internal: one group of a Dag, and the tree beneath it. */
-export interface TaskGroupRecord {
+/**
+ * Internal: one group of a Dag, and the tree beneath it. The options the
+ * group was declared with, other than `prefixGroupId`, are carried as given.
+ */
+export interface TaskGroupRecord extends Omit<TaskGroupOptions, "prefixGroupId"> {
   /** Group ID, including any enclosing group's prefix. */
   readonly groupId: string;
   /** Enclosing group's ID, absent for a group declared on the Dag itself. */
@@ -1158,7 +1174,7 @@ export class Dag {
           "dashes and underscores",
       );
     }
-    const prefixGroupId = this.#prefixGroupIdOf(groupId, options);
+    const { prefixGroupId, ...fields } = this.#groupOptionsOf(groupId, options);
     if (this.#finalized) {
       throw new Error(
         `Task group "${groupId}" cannot be added to Dag "${this.dagId}" after the Dag was read; ` +
@@ -1171,6 +1187,7 @@ export class Dag {
       groupId: fullId,
       ...(parentGroupId !== undefined && { parentGroupId }),
       prefixGroupId,
+      ...fields,
       taskIds: [],
       childGroupIds: [],
     });
@@ -1181,26 +1198,33 @@ export class Dag {
   }
 
   // TypeScript is bypassable, as for #taskSpecOf, so a misspelled or mistyped
-  // option is rejected rather than read as the default.
-  #prefixGroupIdOf(groupId: string, options: TaskGroupOptions): boolean {
+  // option is rejected rather than read as the default. An option set to
+  // undefined counts as unset, as it does in a task spec.
+  #groupOptionsOf(
+    groupId: string,
+    options: TaskGroupOptions,
+  ): Omit<TaskGroupOptions, "prefixGroupId"> & { readonly prefixGroupId: boolean } {
     const value: unknown = options;
+    const owner = `for Dag "${this.dagId}" task group "${groupId}"`;
     if (!isPlainRecord(value)) {
-      throw new Error(`options for Dag "${this.dagId}" task group "${groupId}" must be an object`);
+      throw new Error(`options ${owner} must be an object`);
     }
+    const checked: Record<string, unknown> = { prefixGroupId: true };
     for (const key of Reflect.ownKeys(value)) {
-      if (key !== "prefixGroupId") {
-        throw new Error(
-          `Unknown option "${String(key)}" for Dag "${this.dagId}" task group "${groupId}"`,
-        );
+      if (typeof key !== "string" || (key !== "prefixGroupId" && !GROUP_TEXT_OPTIONS.has(key))) {
+        throw new Error(`Unknown option "${String(key)}" ${owner}`);
       }
+      const given = value[key];
+      if (given === undefined) continue;
+      if (key === "prefixGroupId" && typeof given !== "boolean") {
+        throw new Error(`prefixGroupId ${owner} must be a boolean`);
+      }
+      if (key !== "prefixGroupId" && typeof given !== "string") {
+        throw new Error(`${key} ${owner} must be a string`);
+      }
+      checked[key] = given;
     }
-    const { prefixGroupId = true } = value;
-    if (typeof prefixGroupId !== "boolean") {
-      throw new Error(
-        `prefixGroupId for Dag "${this.dagId}" task group "${groupId}" must be a boolean`,
-      );
-    }
-    return prefixGroupId;
+    return checked as Omit<TaskGroupOptions, "prefixGroupId"> & { readonly prefixGroupId: boolean };
   }
 
   // Python's TaskGroup.child_id: a group adds its ID in front of what it holds
@@ -1510,6 +1534,14 @@ const TASK_ID_CHARACTERS = /^[\p{L}\p{N}_.-]+$/u;
 // since the dot is what joins it to what it holds.
 const GROUP_ID_CHARACTERS = /^[\p{L}\p{N}_-]+$/u;
 const GROUP_ID_MAX_LENGTH = 200;
+// The options of a group other than prefixGroupId, each a string the serializer writes as given.
+const GROUP_TEXT_OPTIONS: ReadonlySet<string> = new Set([
+  "groupDisplayName",
+  "tooltip",
+  "docMd",
+  "uiColor",
+  "uiFgColor",
+]);
 
 /** A value as an error message names it: its type, or the literal when short. */
 function describeValue(value: unknown): string {
