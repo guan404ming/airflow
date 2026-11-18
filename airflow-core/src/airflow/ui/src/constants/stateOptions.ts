@@ -77,7 +77,9 @@ export const dagRunTypeOptions = createListCollection({
     { label: "dags:filters.allRunTypes", value: "all" },
     { label: "common:runTypes.backfill", value: "backfill" },
     { label: "common:runTypes.manual", value: "manual" },
+    { label: "common:runTypes.operator_triggered", value: "operator_triggered" },
     { label: "common:runTypes.scheduled", value: "scheduled" },
     { label: "common:runTypes.asset_triggered", value: "asset_triggered" },
+    { label: "common:runTypes.asset_materialization", value: "asset_materialization" },
   ],
 });
