@@ -16,19 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useRef } from "react";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import {
+  useDagRunServiceGetDagRunKey,
   useDagRunServiceGetDagRunsKey,
+  useDagRunServiceGetExecutionKey,
+  useGanttServiceGetGanttDataKey,
   useTaskInstanceServiceBulkTaskInstances,
+  useTaskInstanceServiceGetMappedTaskInstanceKey,
+  useTaskInstanceServiceGetTaskInstanceKey,
   useTaskInstanceServiceGetTaskInstancesKey,
 } from "openapi/queries";
 import type { BulkBody_BulkTaskInstanceBody_, BulkResponse } from "openapi/requests/types.gen";
 
 import { toaster } from "src/system-components";
 
-import { tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { gridQueryKeys, tiPerAttemptQueryKeys } from "./gridViewQueryKeys";
+import { useClearTaskInstancesDryRunKey } from "./useClearTaskInstancesDryRun";
+import { usePatchTaskInstanceDryRunKey } from "./usePatchTaskInstanceDryRun";
 
 type Props = {
   readonly deselectKeys: (keys: Array<string>) => void;
@@ -37,13 +46,25 @@ type Props = {
 
 export const useBulkTaskInstances = ({ deselectKeys, onSuccessConfirm }: Props) => {
   const queryClient = useQueryClient();
+  const affectedDagIds = useRef<Set<string>>(new Set());
   const { t: translate } = useTranslation(["common", "dags"]);
 
   const onSuccess = async (responseData: BulkResponse) => {
+    // Invalidate what usePatchTaskInstance does: lists, run and TI details, gantt, grid, and dry-run previews.
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [useTaskInstanceServiceGetTaskInstancesKey] }),
       queryClient.invalidateQueries({ queryKey: [useDagRunServiceGetDagRunsKey] }),
+      queryClient.invalidateQueries({ queryKey: [useDagRunServiceGetDagRunKey] }),
+      queryClient.invalidateQueries({ queryKey: [useDagRunServiceGetExecutionKey] }),
+      queryClient.invalidateQueries({ queryKey: [useTaskInstanceServiceGetTaskInstanceKey] }),
+      queryClient.invalidateQueries({ queryKey: [useTaskInstanceServiceGetMappedTaskInstanceKey] }),
+      queryClient.invalidateQueries({ queryKey: [useGanttServiceGetGanttDataKey] }),
       ...tiPerAttemptQueryKeys.map((key) => queryClient.invalidateQueries({ queryKey: key })),
+      ...[...affectedDagIds.current].flatMap((dagId) => [
+        ...gridQueryKeys(dagId).map((key) => queryClient.invalidateQueries({ queryKey: key })),
+        queryClient.invalidateQueries({ queryKey: [useClearTaskInstancesDryRunKey, dagId] }),
+        queryClient.invalidateQueries({ queryKey: [usePatchTaskInstanceDryRunKey, dagId] }),
+      ]),
     ]);
 
     const isDelete = Boolean(responseData.delete);
@@ -83,6 +104,16 @@ export const useBulkTaskInstances = ({ deselectKeys, onSuccessConfirm }: Props) 
 
   const bulkAction = (requestBody: BulkBody_BulkTaskInstanceBody_) => {
     reset();
+    const dagIds = new Set<string>();
+
+    for (const action of requestBody.actions) {
+      for (const entity of action.entities) {
+        if (typeof entity !== "string" && entity.dag_id !== null && entity.dag_id !== undefined) {
+          dagIds.add(entity.dag_id);
+        }
+      }
+    }
+    affectedDagIds.current = dagIds;
     mutate({ dagId: "~", dagRunId: "~", requestBody });
   };
 
