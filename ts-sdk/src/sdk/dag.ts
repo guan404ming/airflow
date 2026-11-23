@@ -523,7 +523,7 @@ export type TaskInput<TValue> = TaskRef<TValue> | JsonCompatible<TValue>;
 
 /** The inputs of a task, keyed by the name of the argument each one supplies. */
 export type TaskInputs<TArgs> = {
-  [K in keyof TArgs]: TaskRef | JsonCompatible<TArgs[K]>;
+  [K in keyof TArgs]: TaskInput<TArgs[K]>;
 };
 
 /**
@@ -546,7 +546,7 @@ export type TaskInputs<TArgs> = {
  * ```
  *
  * The call is checked argument by argument: every one has to be supplied, and
- * a literal has to match its argument's type.
+ * a reference or a literal has to match its argument's type.
  */
 export type TaskFactory<TArgs extends object | void = void, TReturn = unknown> = [TArgs] extends [
   void,

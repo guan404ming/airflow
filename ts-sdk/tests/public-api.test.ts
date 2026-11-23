@@ -353,15 +353,17 @@ describe("public API", () => {
     // Wiring moved to the factory call, and the spec is the trailing argument
     // itself.
     expectTypeOf<TaskOptions>().toEqualTypeOf<TaskSpec>();
-    // Each input takes any upstream reference or a literal of its own type.
-    expectTypeOf<TaskInputs<{ rows: number }>>().toEqualTypeOf<{ rows: TaskRef | number }>();
+    // Each input takes an upstream reference or a literal of its own type.
+    expectTypeOf<TaskInputs<{ rows: number }>>().toEqualTypeOf<{
+      rows: TaskRef<number> | number;
+    }>();
     expectTypeOf<TaskInput<number>>().toEqualTypeOf<TaskRef<number> | number>();
     // A handler with no arguments is called with none; one that takes an object
     // is called with its inputs named.
     expectTypeOf<TaskFactory>().toEqualTypeOf<() => TaskRef>();
     expectTypeOf<TaskFactory<void, boolean>>().toEqualTypeOf<() => TaskRef<boolean>>();
     expectTypeOf<TaskFactory<{ rows: number }>>().toEqualTypeOf<
-      (inputs: { rows: TaskRef | number }) => TaskRef
+      (inputs: { rows: TaskRef<number> | number }) => TaskRef
     >();
     expectTypeOf<ConstructorParameters<typeof Dag>>().toEqualTypeOf<[string, DagSpec?]>();
     // Overloaded, so the two forms are checked by calling them rather than by
@@ -526,9 +528,12 @@ describe("public API", () => {
       transform({});
       // @ts-expect-error a literal has to match its argument's type.
       transform({ rows: "many" });
+      const count = dag.task("count", async (): Promise<number> => 1);
       const totals = dag.task("totals", async (): Promise<{ rows: number }> => ({ rows: 1 }));
       // Inputs are named.
       transform({ rows: 1 });
+      transform({ rows: count() });
+      // @ts-expect-error a reference has to return its argument's type.
       transform({ rows: totals() });
       // @ts-expect-error a bare reference is not an object of named inputs.
       transform(totals());
@@ -546,7 +551,10 @@ describe("public API", () => {
       const stamp = dag.task("stamp", async (_: { at: Date }) => undefined);
       // @ts-expect-error a Date cannot survive the serialized Dag, so only a reference will do.
       stamp({ at: new Date() });
-      // The reference an upstream call returns is always accepted.
+      const now = dag.task("now", async () => new Date());
+      // A reference to a Date is accepted where a literal is not.
+      stamp({ at: now() });
+      // @ts-expect-error a reference has to return its argument's type.
       stamp({ at: extract() });
       // @ts-expect-error a bundle is built from Dags, not from task factories.
       new Bundle(extract);

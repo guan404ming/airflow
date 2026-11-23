@@ -37,8 +37,8 @@ describe("the inputs of a HITL task", () => {
     );
 
     expectTypeOf(factory).parameter(0).toEqualTypeOf<{
-      version: TaskRef | string;
-      notes: TaskRef | string;
+      version: TaskRef<string> | string;
+      notes: TaskRef<string> | string;
     }>();
     expectTypeOf(factory).returns.toEqualTypeOf<TaskRef<HITLResult>>();
     expectTypeOf(factory).toBeCallableWith({ version: "1.4", notes: "Faster" });
@@ -59,7 +59,7 @@ describe("the inputs of a HITL task", () => {
       approval({ subject: ({ version }: { version: string }) => `Ship ${version}?` }),
     );
 
-    expectTypeOf(factory).parameter(0).toEqualTypeOf<{ version: TaskRef | string }>();
+    expectTypeOf(factory).parameter(0).toEqualTypeOf<{ version: TaskRef<string> | string }>();
     expectTypeOf(factory).returns.toEqualTypeOf<TaskRef<HITLResult>>();
   });
 
@@ -70,14 +70,14 @@ describe("the inputs of a HITL task", () => {
       approval({ subject: "Ship it?", body: ({ notes }: { notes: string }) => notes }),
     );
 
-    expectTypeOf(factory).parameter(0).toEqualTypeOf<{ notes: TaskRef | string }>();
+    expectTypeOf(factory).parameter(0).toEqualTypeOf<{ notes: TaskRef<string> | string }>();
   });
 
   it("are given by an explicit type argument for a fixed subject", () => {
     const dag = new Dag("d");
     const factory = dag.task("x", approval<{ a: string }>({ subject: "s" }));
 
-    expectTypeOf(factory).parameter(0).toEqualTypeOf<{ a: TaskRef | string }>();
+    expectTypeOf(factory).parameter(0).toEqualTypeOf<{ a: TaskRef<string> | string }>();
     expectTypeOf(factory).toBeCallableWith({ a: "value" });
 
     const rejectsWrongInputs = () => {
@@ -98,7 +98,7 @@ describe("the inputs of a HITL task", () => {
 
     expectTypeOf(factory)
       .parameter(0)
-      .toEqualTypeOf<{ a: TaskRef | string; b: TaskRef | number }>();
+      .toEqualTypeOf<{ a: TaskRef<string> | string; b: TaskRef<number> | number }>();
   });
 
   it("are none for a fixed subject and body", () => {

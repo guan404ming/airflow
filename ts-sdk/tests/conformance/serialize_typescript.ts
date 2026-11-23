@@ -119,7 +119,7 @@ function buildDag(dagCase: DagCase): Dag {
     const scope = task.group === undefined ? dag : groups.get(task.group)!;
     factories.set(
       qualifiedTaskId(task),
-      scope.task(task.task_id, async (_inputs: Record<string, TaskRef>) => undefined, spec),
+      scope.task(task.task_id, async (_inputs: Record<string, unknown>) => undefined, spec),
     );
   }
   const refs = new Map<string, TaskRef>();

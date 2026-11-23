@@ -118,7 +118,7 @@ describe("Dag", () => {
 
     const extracted = extract();
     const inputs: Record<string, TaskRef> = { extracted };
-    transform(inputs as { extracted: TaskRef });
+    transform(inputs as { extracted: TaskRef<undefined> });
 
     inputs.sneaky = extracted;
     const recorded = getDagTaskInputs(dag).get("transform")!;
@@ -130,7 +130,7 @@ describe("Dag", () => {
     const first = new Dag("first_dag");
     const second = new Dag("second_dag");
     const extracted = first.task("extract", async () => undefined)();
-    const transform = second.task("transform", async (_: { extracted: TaskRef }) => undefined);
+    const transform = second.task("transform", async (_: { extracted: undefined }) => undefined);
 
     expect(() => transform({ extracted })).toThrowError(
       /Input "extracted" of task "transform" comes from Dag "first_dag", not "second_dag"/,
@@ -142,7 +142,7 @@ describe("Dag", () => {
     const second = new Dag("same_id");
     first.task("extract", async () => undefined);
     const extracted = second.task("extract", async () => undefined)();
-    const transform = first.task("transform", async (_: { extracted: TaskRef }) => undefined);
+    const transform = first.task("transform", async (_: { extracted: undefined }) => undefined);
 
     expect(() => transform({ extracted })).toThrowError(
       /Input "extracted" of task "transform" was not returned by this Dag's "extract"/,
@@ -153,7 +153,7 @@ describe("Dag", () => {
     const first = new Dag("same_id");
     const second = new Dag("same_id");
     const ghost = second.task("ghost", async () => undefined)();
-    const transform = first.task("transform", async (_: { ghost: TaskRef }) => undefined);
+    const transform = first.task("transform", async (_: { ghost: undefined }) => undefined);
 
     expect(() => transform({ ghost })).toThrowError(
       /Input "ghost" of task "transform" refers to unregistered task "ghost"/,

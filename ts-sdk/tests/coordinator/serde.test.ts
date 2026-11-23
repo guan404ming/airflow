@@ -35,7 +35,7 @@ import {
 } from "../../src/sdk/dag.js";
 
 type Json = Record<string, unknown>;
-type WiredArgs = Record<string, TaskRef>;
+type WiredArgs = Record<string, unknown>;
 
 interface StagingRefs {
   readonly extracted: TaskRef;

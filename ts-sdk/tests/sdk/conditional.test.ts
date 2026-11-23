@@ -119,12 +119,15 @@ describe("dag.if", () => {
 
   it("requires the handler's inputs at compile time", () => {
     const dag = new Dag("d");
+    const named = dag.task("name", async () => "rows")();
     async function hasRows({ rows }: { rows: number }): Promise<boolean> {
       return rows > 0;
     }
 
     // @ts-expect-error -- hasRows needs { rows }.
     expect(() => dag.if(hasRows, undefined, { taskId: "has_rows" })).not.toThrow();
+    // @ts-expect-error -- rows is a number, not a string.
+    expect(() => dag.if(hasRows, { rows: named }, { taskId: "has_named_rows" })).not.toThrow();
   });
 
   it("takes the condition's id from the handler's name", () => {
