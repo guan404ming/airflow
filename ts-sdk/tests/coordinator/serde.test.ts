@@ -331,10 +331,20 @@ describe("serializeDag", () => {
       expect((timetable["__var"] as Json)["expression"]).toBe(expression);
     });
 
+    it.each(["@midnight", "@annually"])(
+      "keeps the croniter alias %s unexpanded, as Python stores it",
+      (schedule) => {
+        const timetable = serializeWith({ schedule })["timetable"] as Json;
+        expect(timetable["__type"]).toBe("airflow.timetables.trigger.CronTriggerTimetable");
+        expect((timetable["__var"] as Json)["expression"]).toBe(schedule);
+      },
+    );
+
     it.each([
       ["prose", "every tuesday"],
       ["too few fields", "0 0 * *"],
       ["too many fields", "0 0 * * * * *"],
+      ["an empty list item", "0 0 * * 1,"],
       ["an unknown preset", "@fortnightly"],
     ])("rejects %s rather than writing a schedule nothing can parse", (_label, schedule) => {
       expect(() => serializeWith({ schedule })).toThrowError(
@@ -345,6 +355,9 @@ describe("serializeDag", () => {
     it.each([
       ["a six-field expression", "0 0 0 * * *"],
       ["named weekdays", "0 0 * * MON-FRI"],
+      ["a list of named weekdays", "0 9 * * MON,WED,FRI"],
+      ["a list of named months", "0 0 1 JAN,JUL *"],
+      ["the nth named weekday", "0 0 * * MON#2"],
       ["a step", "*/15 * * * *"],
     ])("accepts %s", (_label, schedule) => {
       expect(() => serializeWith({ schedule })).not.toThrow();

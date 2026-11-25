@@ -402,8 +402,8 @@ function serializeTimetable(schedule: unknown, dagId: string): SerializedValue {
   if (!isCronExpression(expression)) {
     throw new Error(
       `schedule ${JSON.stringify(schedule)} for Dag "${dagId}" is not a cron expression or a ` +
-        `preset (${Object.keys(CRON_PRESETS).join(", ")}, @once, @continuous); a schedule the ` +
-        "scheduler cannot parse would leave the Dag unschedulable",
+        `preset (${[...Object.keys(CRON_PRESETS), ...CRON_ALIASES].join(", ")}, @once, ` +
+        "@continuous); a schedule the scheduler cannot parse would leave the Dag unschedulable",
     );
   }
   // TODO: honour [scheduler] create_cron_data_intervals, which switches Python
@@ -432,8 +432,23 @@ const CRON_PRESETS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Aliases croniter accepts that `cron_presets` does not expand, so Python
+ * stores them unexpanded and so does this.
+ */
+const CRON_ALIASES: ReadonlySet<string> = new Set(["@midnight", "@annually"]);
+
+/**
+ * One value in a cron field: a number, `*`, `?`, croniter's `L` and `W`
+ * qualifiers, or a three-letter month or weekday name.
+ */
+const CRON_VALUE = String.raw`(?:\d+[LW]?|[LW]\d+|[*?LW]|[A-Z]{3})`;
+
+/** One comma-separated item of a cron field: values joined by `-`, `/` or `#`. */
+const CRON_ITEM = new RegExp(`^${CRON_VALUE}(?:[-/#]${CRON_VALUE})*$`, "i");
+
+/**
  * Whether `expression` has the shape croniter accepts: five or six
- * space-separated fields of cron characters.
+ * space-separated fields of cron characters, or an `@` alias.
  *
  * A shape check, not a parse: croniter validates the ranges, and repeating that
  * here would be a second implementation to keep in step. What it does catch is
@@ -441,11 +456,10 @@ const CRON_PRESETS: Readonly<Record<string, string>> = {
  * the scheduler then fails to build a timetable for.
  */
 function isCronExpression(expression: string): boolean {
+  if (CRON_ALIASES.has(expression)) return true;
   const fields = expression.trim().split(/\s+/);
   if (fields.length !== 5 && fields.length !== 6) return false;
-  return fields.every(
-    (field) => /^[\d*,\-/?LW#]+$/i.test(field) || /^[A-Z]{3}(-[A-Z]{3})?$/i.test(field),
-  );
+  return fields.every((field) => field.split(",").every((item) => CRON_ITEM.test(item)));
 }
 
 function simpleTimetable(type: string): SerializedValue {
