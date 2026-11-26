@@ -20,6 +20,7 @@
 import type {
   ConnectionResult,
   GetXComOpts,
+  JsonCompatible,
   JsonValue,
   SetXComOpts,
   TaskStateStoreSetOpts,
@@ -100,7 +101,7 @@ export interface TaskClient {
    * @throws `TypeError` when `key`, `dagId`, `taskId` or `runId` is set to a non-string, or `mapIndex` is not a number or `null`.
    * @throws `RangeError` when `key`, `dagId`, `taskId` or `runId` is an empty string, or `mapIndex` is not an integer.
    */
-  setXCom(opts: SetXComOpts): Promise<void>;
+  setXCom<T>(opts: SetXComOpts<T>): Promise<void>;
 
   /**
    * Key/value state private to this task instance.
@@ -174,7 +175,11 @@ export interface TaskStateStore {
    * `[state_store] default_retention_days` is invalid; or when the resolved
    * expiry would overflow the wire timestamp (year 9999).
    */
-  set(key: string, value: NonNullable<JsonValue>, opts?: TaskStateStoreSetOpts): Promise<void>;
+  set<T>(
+    key: string,
+    value: NonNullable<JsonValue | JsonCompatible<T>>,
+    opts?: TaskStateStoreSetOpts,
+  ): Promise<void>;
 
   /**
    * Delete a key.

@@ -24,6 +24,7 @@ import type { TaskClient, TaskStateStore } from "../sdk/client.js";
 import type {
   ConnectionResult,
   GetXComOpts,
+  JsonCompatible,
   JsonValue,
   SetXComOpts,
   TaskStateStoreSetOpts,
@@ -287,9 +288,9 @@ export function createCoordinatorClient(
       );
     },
 
-    async set(
+    async set<T>(
       key: string,
-      value: NonNullable<JsonValue>,
+      value: NonNullable<JsonValue | JsonCompatible<T>>,
       opts: TaskStateStoreSetOpts = {},
     ): Promise<void> {
       assertKey(key, "task state store key");
@@ -304,7 +305,7 @@ export function createCoordinatorClient(
         type: "SetTaskStateStore",
         ti_id: tiId,
         key,
-        value,
+        value: value as JsonValue,
         expires_at: resolveExpiresAt(opts.retention),
       };
       await rpc("SetTaskStateStore", "OKResponse", msg, () => undefined, "throw");
@@ -397,7 +398,7 @@ export function createCoordinatorClient(
       return (value as unknown as T) ?? null;
     },
 
-    async setXCom(opts: SetXComOpts): Promise<void> {
+    async setXCom<T>(opts: SetXComOpts<T>): Promise<void> {
       const target = resolveXComTarget(opts, ctx);
       // A map index only names a row of the task that owns it, so another task or
       // run does not inherit it. `mapIndex` is nullable: an explicit null stays null.
@@ -408,7 +409,7 @@ export function createCoordinatorClient(
       const msg: SetXCom = {
         type: "SetXCom",
         ...target,
-        value: opts.value,
+        value: opts.value as JsonValue,
         map_index: mapIndex === null || mapIndex < 0 ? null : mapIndex,
       };
       await rpc("SetXCom", null, msg, () => undefined, "throw");

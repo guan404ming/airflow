@@ -22,6 +22,29 @@ export type JsonValue =
   string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 /**
+ * The part of `T` that JSON can carry, matched structurally.
+ *
+ * `Extract<T, JsonValue>` would do for a type literal but collapses an
+ * `interface` to `never`, since an interface gets no implicit index signature
+ * and so never matches `JsonValue`'s object arm. An object survives only if
+ * every property does, which leaves types JSON cannot carry — a `Date`, a
+ * method — as `never`.
+ */
+export type JsonCompatible<T> = T extends JsonValue
+  ? T
+  : // A function is an object with no keys, so it would otherwise map to `{}`
+    // and take every method of a class along with it.
+    T extends (...args: never[]) => unknown
+    ? never
+    : T extends readonly (infer TElement)[]
+      ? readonly JsonCompatible<TElement>[]
+      : T extends object
+        ? T extends { [K in keyof T]: JsonCompatible<T[K]> }
+          ? { [K in keyof T]: JsonCompatible<T[K]> }
+          : never
+        : never;
+
+/**
  * Options for pulling an XCom value.
  *
  * `dagId` and `runId` default to the running task's context when omitted or
@@ -65,10 +88,10 @@ export interface GetXComOpts {
  * the running task, and to the unmapped value for any other task or run. Pass
  * a number to pick one mapped instance, or `null` for the unmapped one.
  */
-export interface SetXComOpts {
+export interface SetXComOpts<T = JsonValue> {
   /** XCom key to write; defaults to `"return_value"`. */
   key?: string;
-  value: JsonValue;
+  value: JsonValue | JsonCompatible<T>;
   dagId?: string | null;
   runId?: string | null;
   taskId?: string | null;

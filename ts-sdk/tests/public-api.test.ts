@@ -19,6 +19,7 @@
 
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { AIRFLOW_METADATA_FLAG } from "../src/coordinator/manifest.js";
+import type { JsonCompatible } from "../src/sdk/client-types.js";
 import type {
   ArgNameMap,
   ConnectionResult,
@@ -56,6 +57,11 @@ import {
   VariableNotFoundError,
   withArgNames,
 } from "../src/index.js";
+
+interface RouteDelay {
+  routeId: string;
+  minutes: number;
+}
 
 describe("public API", () => {
   it("exports the Dag authoring surface", async () => {
@@ -459,7 +465,11 @@ describe("public API", () => {
       <T = unknown>(key: string) => Promise<T | null>
     >();
     expectTypeOf<TaskStateStore["set"]>().toEqualTypeOf<
-      (key: string, value: NonNullable<JsonValue>, opts?: TaskStateStoreSetOpts) => Promise<void>
+      <T>(
+        key: string,
+        value: NonNullable<JsonValue | JsonCompatible<T>>,
+        opts?: TaskStateStoreSetOpts,
+      ) => Promise<void>
     >();
     expectTypeOf<TaskStateStore["delete"]>().toEqualTypeOf<(key: string) => Promise<void>>();
     expectTypeOf<TaskStateStore["clear"]>().toEqualTypeOf<() => Promise<void>>();
@@ -468,7 +478,6 @@ describe("public API", () => {
   it("rejects wire-format names and non-JSON XCom values", () => {
     function acceptsGetXComOpts(_opts: GetXComOpts): void {}
     function acceptsSetXComOpts(_opts: SetXComOpts): void {}
-    function acceptsTaskStateValue(_value: NonNullable<JsonValue>): void {}
 
     acceptsGetXComOpts({
       key: "result",
@@ -558,9 +567,19 @@ describe("public API", () => {
     expectTypeOf<TaskRef>().toHaveProperty("handler");
     // @ts-expect-error XCom values must be JSON-compatible.
     acceptsSetXComOpts({ key: "result", value: new Date() });
-    // @ts-expect-error task-state-store values must be JSON-compatible.
-    acceptsTaskStateValue(new Date());
-    // @ts-expect-error task-state-store values must not be null.
-    acceptsTaskStateValue(null);
+    // Never invoked: only the types are checked.
+    const checksClientValues = (client: TaskClient) => {
+      const delays: RouteDelay[] = [{ routeId: "r1", minutes: 3 }];
+      // An interface has no index signature, and is JSON all the same.
+      void client.setXCom({ key: "delays", value: delays });
+      void client.taskStateStore.set("delays", delays);
+      // @ts-expect-error XCom values must be JSON-compatible, at any depth.
+      void client.setXCom({ key: "at", value: { at: new Date() } });
+      // @ts-expect-error task-state-store values must be JSON-compatible.
+      void client.taskStateStore.set("at", new Date());
+      // @ts-expect-error task-state-store values must not be null.
+      void client.taskStateStore.set("k", null);
+    };
+    void checksClientValues;
   });
 });

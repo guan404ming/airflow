@@ -30,7 +30,7 @@ import {
   type GeneratedTaskFields,
 } from "../generated/dag-schema-fields.js";
 import { brand, DUPLICATE_COPY_HINT, hasBrand } from "./brand.js";
-import type { JsonValue } from "./client-types.js";
+import type { JsonCompatible, JsonValue } from "./client-types.js";
 import { getCurrentModuleSource } from "./module-source.js";
 import { isOperator, isOwnOperator, type Operator } from "./operator.js";
 import { getClient, type TaskFunction } from "./task.js";
@@ -487,29 +487,6 @@ function findNestedTaskRef(value: unknown, seen: WeakSet<object>): TaskRef | und
   }
   return undefined;
 }
-
-/**
- * The part of `T` a literal can express, matched structurally.
- *
- * `Extract<T, JsonValue>` would do for a type literal but collapses an
- * `interface` to `never`, since an interface gets no implicit index signature
- * and so never matches `JsonValue`'s object arm. An object survives only if
- * every property does, which leaves types JSON cannot carry — a `Date`, a
- * method — as `never`, so such an argument can only be given a reference.
- */
-type JsonCompatible<T> = T extends JsonValue
-  ? T
-  : // A function is an object with no keys, so it would otherwise map to `{}`
-    // and take every method of a class along with it.
-    T extends (...args: never[]) => unknown
-    ? never
-    : T extends readonly (infer TElement)[]
-      ? readonly JsonCompatible<TElement>[]
-      : T extends object
-        ? T extends { [K in keyof T]: JsonCompatible<T[K]> }
-          ? { [K in keyof T]: JsonCompatible<T[K]> }
-          : never
-        : never;
 
 /**
  * One input of a task: the upstream task that produces the value, or the value.
